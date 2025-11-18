@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý SOP Danh mục Thuốc Nhận Hàng (Bản Mới)</title>
+    <title>Quản lý SOP Danh mục Thuốc Nhận Hàng (Bản Mới - SOP Tâm)</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
@@ -454,7 +454,7 @@
             </div>
             <div class="signature-box">
                 <div class="signature-line">Bộ phận Kho</div>
-                <input type="text" id="warehouseStaffName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none;">
+                <input type="text" id="warehouseStaffName" value="Nguyễn Minh Tâm" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none;">
             </div>
         </div>
 
@@ -709,13 +709,12 @@
                 });
             }
             
-            // --- SỬA LỖI: Hàm thu thập dữ liệu từ bảng để lưu Firebase ---
             function collectFormData() {
                 const products = [];
                 const rows = productTableBody.querySelectorAll('tr');
                 rows.forEach(row => {
                     products.push({
-                        productName: row.querySelector('textarea[name="productName"]').value, // Dùng Textarea
+                        productName: row.querySelector('textarea[name="productName"]').value, 
                         unit: row.querySelector('input[name="unit"]').value,
                         lotNumber: row.querySelector('input[name="lotNumber"]').value,
                         expiryDate: row.querySelector('input[name="expiryDate"]').value,
@@ -743,7 +742,7 @@
                         preparerName: document.getElementById('preparerName').value,
                         warehouseStaffName: document.getElementById('warehouseStaffName').value
                     },
-                    products: products // Đã có dữ liệu
+                    products: products
                 };
             }
 
@@ -793,7 +792,8 @@
                 document.getElementById('paymentCondition').value = formData.deliveryInfo.paymentCondition || '';
                 document.getElementById('otherRequirements').value = formData.deliveryInfo.otherRequirements || '';
                 document.getElementById('preparerName').value = formData.deliveryInfo.preparerName || '';
-                document.getElementById('warehouseStaffName').value = formData.deliveryInfo.warehouseStaffName || '';
+                // CẬP NHẬT: Fallback về tên SOP Tâm nếu dữ liệu rỗng
+                document.getElementById('warehouseStaffName').value = formData.deliveryInfo.warehouseStaffName || 'Nguyễn Minh Tâm';
                 
                 productTableBody.innerHTML = '';
                 productCount = 0;
@@ -1114,7 +1114,10 @@
             document.getElementById('resetBtn').addEventListener('click', function() {
                 if (confirm('Bạn có chắc chắn muốn làm mới biên bản? Tất cả dữ liệu chưa lưu sẽ bị mất.')) {
                     document.querySelectorAll('input, select, textarea').forEach(element => {
-                        if (element.id !== 'receivingPlace') element.value = '';
+                        // Giữ lại Địa chỉ và Tên SOP Tâm
+                        if (element.id !== 'receivingPlace' && element.id !== 'warehouseStaffName') {
+                            element.value = '';
+                        }
                     });
                     productTableBody.innerHTML = '';
                     productCount = 0;
