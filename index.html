@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý SOP Danh mục Thuốc Nhận Hàng</title>
-    <!-- Firebase -->
+    <title>Quản lý SOP Danh mục Thuốc Nhận Hàng (Bản Mới)</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
-    <!-- Thư viện SheetJS để đọc Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Thư viện jsPDF để xuất PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -120,6 +117,24 @@
             font-size: 13px;
             transition: all 0.2s;
         }
+        /* CSS riêng cho Textarea tự động giãn dòng */
+        textarea.auto-resize {
+            width: 100%;
+            resize: none; /* Tắt kéo góc mặc định */
+            overflow: hidden; /* Ẩn thanh cuộn */
+            min-height: 34px; /* Cao bằng input thường */
+            font-family: inherit;
+            padding: 8px 10px;
+            box-sizing: border-box;
+            line-height: 1.4;
+            background-color: white;
+        }
+        textarea.auto-resize:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.1);
+        }
+
         input:focus, select:focus, textarea:focus {
             border-color: var(--primary-color);
             outline: none;
@@ -131,18 +146,37 @@
             margin-top: 10px;
             font-size: 13px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            table-layout: fixed; /* Quan trọng để cột giữ kích thước khi kéo */
         }
         th, td {
             border: 1px solid var(--border-color);
             padding: 8px;
             text-align: center;
+            word-wrap: break-word; /* Cho phép xuống dòng trong ô */
         }
         th {
             background-color: var(--primary-color);
             color: white;
             font-weight: 600;
             font-size: 12px;
+            position: relative; /* Để định vị thanh kéo */
         }
+        /* CSS cho thanh kéo cột */
+        .resizer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            cursor: col-resize;
+            user-select: none;
+            height: 100%;
+            z-index: 10;
+        }
+        .resizer:hover, .resizing {
+            background-color: var(--secondary-color);
+            opacity: 0.7;
+        }
+
         tr:nth-child(even) {
             background-color: #f8f9fa;
         }
@@ -173,51 +207,20 @@
             transform: translateY(-1px);
             box-shadow: 0 3px 5px rgba(0,0,0,0.1);
         }
-        .btn-primary {
-            background-color: var(--accent-color);
-            color: white;
-        }
-        .btn-primary:hover {
-            background-color: #219653;
-        }
-        .btn-secondary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        .btn-secondary:hover {
-            background-color: #1e4a8a;
-        }
-        .btn-danger {
-            background-color: #e74c3c;
-            color: white;
-        }
-        .btn-danger:hover {
-            background-color: #c0392b;
-        }
-        .btn-warning {
-            background-color: #f39c12;
-            color: white;
-        }
-        .btn-warning:hover {
-            background-color: #d35400;
-        }
-        .btn-info {
-            background-color: #3498db;
-            color: white;
-        }
-        .btn-info:hover {
-            background-color: #2980b9;
-        }
-        .btn-purple {
-            background-color: #9b59b6;
-            color: white;
-        }
-        .btn-purple:hover {
-            background-color: #8e44ad;
-        }
-        .hidden {
-            display: none;
-        }
+        .btn-primary { background-color: var(--accent-color); color: white; }
+        .btn-primary:hover { background-color: #219653; }
+        .btn-secondary { background-color: var(--primary-color); color: white; }
+        .btn-secondary:hover { background-color: #1e4a8a; }
+        .btn-danger { background-color: #e74c3c; color: white; }
+        .btn-danger:hover { background-color: #c0392b; }
+        .btn-warning { background-color: #f39c12; color: white; }
+        .btn-warning:hover { background-color: #d35400; }
+        .btn-info { background-color: #3498db; color: white; }
+        .btn-info:hover { background-color: #2980b9; }
+        .btn-purple { background-color: #9b59b6; color: white; }
+        .btn-purple:hover { background-color: #8e44ad; }
+        
+        .hidden { display: none; }
         .upload-section {
             margin-top: 20px;
             padding: 15px;
@@ -277,9 +280,7 @@
             margin-right: 15px;
             font-weight: normal;
         }
-        .no-print {
-            display: block;
-        }
+        .no-print { display: block; }
         .section-title {
             font-size: 16px;
             font-weight: 600;
@@ -310,24 +311,11 @@
             padding: 8px;
             border-bottom: 1px solid var(--border-color);
         }
-        .file-item:last-child {
-            border-bottom: none;
-        }
-        .file-info {
-            flex-grow: 1;
-        }
-        .file-name {
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-        .file-date {
-            font-size: 12px;
-            color: #6c757d;
-        }
-        .file-actions {
-            display: flex;
-            gap: 5px;
-        }
+        .file-item:last-child { border-bottom: none; }
+        .file-info { flex-grow: 1; }
+        .file-name { font-weight: 600; color: var(--primary-color); }
+        .file-date { font-size: 12px; color: #6c757d; }
+        .file-actions { display: flex; gap: 5px; }
         .status-indicator {
             display: inline-block;
             width: 10px;
@@ -335,31 +323,15 @@
             border-radius: 50%;
             margin-right: 5px;
         }
-        .status-online {
-            background-color: var(--accent-color);
-        }
-        .status-offline {
-            background-color: #e74c3c;
-        }
+        .status-online { background-color: var(--accent-color); }
+        .status-offline { background-color: #e74c3c; }
+        
         @media print {
-            .no-print, .no-print * {
-                display: none !important;
-            }
-            body {
-                padding: 0;
-                background-color: white;
-            }
-            .container {
-                box-shadow: none;
-                padding: 10px;
-                max-width: 100%;
-            }
-            table {
-                font-size: 12px;
-            }
-            th, td {
-                padding: 6px;
-            }
+            .no-print, .no-print * { display: none !important; }
+            body { padding: 0; background-color: white; }
+            .container { box-shadow: none; padding: 10px; max-width: 100%; }
+            table { font-size: 12px; }
+            th, td { padding: 6px; }
         }
         .alert {
             padding: 10px;
@@ -367,28 +339,12 @@
             margin: 8px 0;
             font-size: 13px;
         }
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .compact-table {
-            font-size: 12px;
-        }
-        .compact-table th, 
-        .compact-table td {
-            padding: 6px 4px;
-        }
-        .compact-table input, 
-        .compact-table select {
-            padding: 4px 6px;
-            font-size: 12px;
-        }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        .compact-table { font-size: 12px; }
+        .compact-table th, .compact-table td { padding: 6px 4px; vertical-align: middle; }
+        .compact-table input, .compact-table select { padding: 4px 6px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -403,8 +359,7 @@
                 <div class="document-code">BMI.06</div>
             </div>
             <div class="logo-container" style="visibility: hidden;">
-                <!-- Placeholder for alignment -->
-            </div>
+                </div>
         </div>
 
         <div id="connectionStatus" class="alert" style="display: none;">
@@ -451,27 +406,26 @@
         </div>
 
         <div class="compact-form-section">
-            <div class="section-title">Danh mục thuốc nhận hàng</div>
+            <div class="section-title">Danh mục thuốc nhận hàng (Có thể kéo độ rộng cột)</div>
             <table id="productTable" class="compact-table">
                 <thead>
                     <tr>
-                        <th width="4%">STT</th>
-                        <th width="18%">Tên hàng</th>
-                        <th width="8%">Đơn vị tính</th>
-                        <th width="10%">Số Lô</th>
-                        <th width="10%">Hạn sử dụng</th>
-                        <th width="8%">Số lượng<br>Thực tế</th>
-                        <th width="7%">Thừa</th>
-                        <th width="7%">Thiếu</th>
-                        <th width="7%">Hư hỏng</th>
-                        <th width="10%">Tình trạng</th>
-                        <th width="8%">Ghi chú</th>
-                        <th width="5%" class="no-print">Thao tác</th>
+                        <th style="width: 40px;">STT</th>
+                        <th style="width: 200px;">Tên hàng</th>
+                        <th style="width: 80px;">ĐVT</th>
+                        <th style="width: 90px;">Số Lô</th>
+                        <th style="width: 90px;">Hạn SD</th>
+                        <th style="width: 80px;">SL<br>Thực tế</th>
+                        <th style="width: 60px;">Thừa</th>
+                        <th style="width: 60px;">Thiếu</th>
+                        <th style="width: 60px;">Hỏng</th>
+                        <th style="width: 100px;">Tình trạng</th>
+                        <th style="width: 100px;">Ghi chú</th>
+                        <th style="width: 50px;" class="no-print">Xóa</th>
                     </tr>
                 </thead>
                 <tbody id="productTableBody">
-                    <!-- Dữ liệu sẽ được thêm vào đây -->
-                </tbody>
+                    </tbody>
             </table>
             <button type="button" id="addProductBtn" class="btn-secondary no-print" style="margin-top: 10px;">
                 <span>+</span> Thêm sản phẩm
@@ -494,8 +448,7 @@
         </div>
 
         <div class="signature-section">
-            <div></div> <!-- Empty div for alignment -->
-            <div class="signature-box">
+            <div></div> <div class="signature-box">
                 <div class="signature-line">Người lập biên bản</div>
                 <input type="text" id="preparerName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none;">
             </div>
@@ -529,7 +482,6 @@
             </div>
             <p style="font-size: 13px; margin: 8px 0;"><strong>Định dạng file Excel hỗ trợ:</strong></p>
             <p style="font-size: 13px; margin: 5px 0;">File của bạn cần có các cột: STT, Tên Hàng Hóa, Đơn Vị, Tổng Số Lượng, Số Lô, Hạn Dùng</p>
-            <p style="font-size: 13px; margin: 5px 0;"><strong>Lưu ý:</strong> Các cột còn lại sẽ được để trống để nhập thủ công</p>
             <div id="uploadMessage"></div>
         </div>
 
@@ -596,22 +548,67 @@
             console.error("Firebase initialization error:", error);
         }
 
-        // Hàm mở ChụpAI
-        function openCameraAI() {
-            window.open('https://idecochupanh.netlify.app', '_blank');
+        // --- HÀM HỖ TRỢ TEXTAREA TỰ CO GIÃN ---
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
         }
 
-        // Hàm mở ERP HOME
-        function openERPHome() {
-            window.open('https://erp-ideco.skyit.vn/#/app/dashboard/main', '_blank');
+        // --- HÀM HỖ TRỢ KÉO CỘT (RESIZABLE COLUMNS) ---
+        function makeTableResizable() {
+            const table = document.getElementById('productTable');
+            const cols = table.querySelectorAll('th');
+
+            cols.forEach((col) => {
+                // Chỉ thêm resizer nếu chưa có và không phải cột cuối cùng (cột Xóa)
+                if (!col.querySelector('.resizer') && !col.classList.contains('no-print')) {
+                    const resizer = document.createElement('div');
+                    resizer.classList.add('resizer');
+                    col.appendChild(resizer);
+                    createResizableColumn(col, resizer);
+                }
+            });
         }
+
+        function createResizableColumn(col, resizer) {
+            let x = 0;
+            let w = 0;
+
+            const mouseDownHandler = function (e) {
+                x = e.clientX;
+                const styles = window.getComputedStyle(col);
+                w = parseInt(styles.width, 10);
+
+                document.addEventListener('mousemove', mouseMoveHandler);
+                document.addEventListener('mouseup', mouseUpHandler);
+                
+                resizer.classList.add('resizing');
+            };
+
+            const mouseMoveHandler = function (e) {
+                const dx = e.clientX - x;
+                col.style.width = `${w + dx}px`;
+            };
+
+            const mouseUpHandler = function () {
+                document.removeEventListener('mousemove', mouseMoveHandler);
+                document.removeEventListener('mouseup', mouseUpHandler);
+                resizer.classList.remove('resizing');
+            };
+
+            resizer.addEventListener('mousedown', mouseDownHandler);
+        }
+
+        function openCameraAI() { window.open('https://idecochupanh.netlify.app', '_blank'); }
+        function openERPHome() { window.open('https://erp-ideco.skyit.vn/#/app/dashboard/main', '_blank'); }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Hiển thị trạng thái kết nối
+            // Kích hoạt tính năng kéo cột ngay khi tải trang
+            makeTableResizable();
+
             const connectionStatus = document.getElementById('connectionStatus');
             const statusText = document.getElementById('statusText');
             
-            // Kiểm tra kết nối Firebase
             if (db) {
                 db.enableNetwork().then(() => {
                     connectionStatus.style.display = 'block';
@@ -628,15 +625,12 @@
                 statusText.innerHTML = '<span class="status-indicator status-offline"></span> Không thể kết nối với Firebase';
             }
 
-            // Xử lý thêm sản phẩm
             const addProductBtn = document.getElementById('addProductBtn');
             const productTableBody = document.getElementById('productTableBody');
             const uploadMessage = document.getElementById('uploadMessage');
             let productCount = 0;
             
-            // Tải dữ liệu đã lưu từ Firebase
             loadDataFromFirebase();
-            // Tải danh sách file PDF
             loadSavedFiles();
             
             addProductBtn.addEventListener('click', function() {
@@ -653,47 +647,49 @@
             function addNewProductRow(productData = {}) {
                 productCount++;
                 const newRow = document.createElement('tr');
+                
+                // Lấy tên sản phẩm
+                const productNameVal = productData['Tên Hàng Hóa'] || productData['Tên hàng'] || productData['productName'] || '';
+
                 newRow.innerHTML = `
                     <td>${productCount}</td>
-                    <td><input type="text" name="productName" value="${productData['Tên Hàng Hóa'] || productData['Tên hàng'] || ''}"></td>
-                    <td><input type="text" name="unit" value="${productData['Đơn Vị'] || productData['Đơn vị tính'] || 'Hộp'}"></td>
-                    <td><input type="text" name="lotNumber" value="${productData['Số Lô'] || productData['Số lô'] || ''}"></td>
-                    <td><input type="date" name="expiryDate" value="${formatDateForInput(productData['Hạn Dùng'] || productData['Hạn sử dụng'] || '')}"></td>
-                    <td><input type="number" name="actualQuantity" min="0" value="${productData['Tổng Số Lượng'] || productData['Số lượng'] || ''}"></td>
-                    <td><input type="number" name="excessQuantity" min="0" value="0"></td>
-                    <td><input type="number" name="shortageQuantity" min="0" value="0"></td>
-                    <td><input type="number" name="damagedQuantity" min="0" value="0"></td>
+                    <td>
+                        <textarea name="productName" class="auto-resize" rows="1" oninput="autoResize(this)">${productNameVal}</textarea>
+                    </td>
+                    <td><input type="text" name="unit" value="${productData['Đơn Vị'] || productData['Đơn vị tính'] || productData['unit'] || 'Hộp'}"></td>
+                    <td><input type="text" name="lotNumber" value="${productData['Số Lô'] || productData['Số lô'] || productData['lotNumber'] || ''}"></td>
+                    <td><input type="date" name="expiryDate" value="${formatDateForInput(productData['Hạn Dùng'] || productData['Hạn sử dụng'] || productData['expiryDate'] || '')}"></td>
+                    <td><input type="number" name="actualQuantity" min="0" value="${productData['Tổng Số Lượng'] || productData['Số lượng'] || productData['actualQuantity'] || ''}"></td>
+                    <td><input type="number" name="excessQuantity" min="0" value="${productData['excessQuantity'] || 0}"></td>
+                    <td><input type="number" name="shortageQuantity" min="0" value="${productData['shortageQuantity'] || 0}"></td>
+                    <td><input type="number" name="damagedQuantity" min="0" value="${productData['damagedQuantity'] || 0}"></td>
                     <td>
                         <select name="packageCondition">
-                            <option value="Nguyên ven">Nguyên ven</option>
-                            <option value="Hư hỏng nhẹ">Hư hỏng nhẹ</option>
-                            <option value="Hư hỏng nặng">Hư hỏng nặng</option>
+                            <option value="Nguyên ven" ${productData['packageCondition'] == 'Nguyên ven' ? 'selected' : ''}>Nguyên ven</option>
+                            <option value="Hư hỏng nhẹ" ${productData['packageCondition'] == 'Hư hỏng nhẹ' ? 'selected' : ''}>Hư hỏng nhẹ</option>
+                            <option value="Hư hỏng nặng" ${productData['packageCondition'] == 'Hư hỏng nặng' ? 'selected' : ''}>Hư hỏng nặng</option>
                         </select>
                     </td>
-                    <td><input type="text" name="note"></td>
+                    <td><input type="text" name="note" value="${productData['note'] || ''}"></td>
                     <td class="no-print"><button type="button" class="btn-danger remove-product" style="padding: 4px 8px; font-size: 11px;">Xóa</button></td>
                 `;
                 
                 productTableBody.appendChild(newRow);
                 
-                // Xử lý sự kiện xóa sản phẩm
+                // Trigger resize ngay lập tức nếu có nội dung
+                const txtArea = newRow.querySelector('textarea[name="productName"]');
+                if(txtArea.value) autoResize(txtArea);
+
                 newRow.querySelector('.remove-product').addEventListener('click', function() {
                     productTableBody.removeChild(newRow);
                     updateRowNumbers();
-                    saveDataToFirebase(); // Đồng bộ sau khi xóa
+                    saveDataToFirebase(); 
                 });
             }
             
-            // Hàm chuyển đổi định dạng ngày từ dd/mm/yyyy sang yyyy-mm-dd
             function formatDateForInput(dateString) {
                 if (!dateString) return '';
-                
-                // Nếu đã là định dạng yyyy-mm-dd thì giữ nguyên
-                if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-                    return dateString;
-                }
-                
-                // Chuyển đổi từ dd/mm/yyyy sang yyyy-mm-dd
+                if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
                 const parts = dateString.split('/');
                 if (parts.length === 3) {
                     const day = parts[0].padStart(2, '0');
@@ -701,11 +697,9 @@
                     const year = parts[2];
                     return `${year}-${month}-${day}`;
                 }
-                
                 return dateString;
             }
             
-            // Cập nhật số thứ tự các dòng
             function updateRowNumbers() {
                 const rows = productTableBody.querySelectorAll('tr');
                 productCount = 0;
@@ -715,7 +709,44 @@
                 });
             }
             
-            // Lưu dữ liệu lên Firebase
+            // --- SỬA LỖI: Hàm thu thập dữ liệu từ bảng để lưu Firebase ---
+            function collectFormData() {
+                const products = [];
+                const rows = productTableBody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    products.push({
+                        productName: row.querySelector('textarea[name="productName"]').value, // Dùng Textarea
+                        unit: row.querySelector('input[name="unit"]').value,
+                        lotNumber: row.querySelector('input[name="lotNumber"]').value,
+                        expiryDate: row.querySelector('input[name="expiryDate"]').value,
+                        actualQuantity: row.querySelector('input[name="actualQuantity"]').value,
+                        excessQuantity: row.querySelector('input[name="excessQuantity"]').value,
+                        shortageQuantity: row.querySelector('input[name="shortageQuantity"]').value,
+                        damagedQuantity: row.querySelector('input[name="damagedQuantity"]').value,
+                        packageCondition: row.querySelector('select[name="packageCondition"]').value,
+                        note: row.querySelector('input[name="note"]').value
+                    });
+                });
+
+                return {
+                    deliveryInfo: {
+                        supplier: document.getElementById('supplierName').value,
+                        invoice: document.getElementById('invoiceNumber').value,
+                        contract: document.getElementById('contractNumber').value,
+                        place: document.getElementById('receivingPlace').value,
+                        date: document.getElementById('receivingDate').value,
+                        time: document.getElementById('receivingTime').value,
+                        inspection: document.getElementById('inspectionResult').value,
+                        deliveryTransport: document.getElementById('deliveryTransport').value,
+                        paymentCondition: document.getElementById('paymentCondition').value,
+                        otherRequirements: document.getElementById('otherRequirements').value,
+                        preparerName: document.getElementById('preparerName').value,
+                        warehouseStaffName: document.getElementById('warehouseStaffName').value
+                    },
+                    products: products // Đã có dữ liệu
+                };
+            }
+
             function saveDataToFirebase() {
                 if (!db) {
                     showMessage('Không thể kết nối với Firebase', 'error');
@@ -734,7 +765,6 @@
                     });
             }
             
-            // Tải dữ liệu từ Firebase
             function loadDataFromFirebase() {
                 if (!db) return;
                 
@@ -749,28 +779,6 @@
                 });
             }
             
-            // Thu thập dữ liệu từ form
-            function collectFormData() {
-                return {
-                    deliveryInfo: {
-                        supplier: document.getElementById('supplierName').value,
-                        invoice: document.getElementById('invoiceNumber').value,
-                        contract: document.getElementById('contractNumber').value,
-                        place: document.getElementById('receivingPlace').value,
-                        date: document.getElementById('receivingDate').value,
-                        time: document.getElementById('receivingTime').value,
-                        inspection: document.getElementById('inspectionResult').value,
-                        deliveryTransport: document.getElementById('deliveryTransport').value,
-                        paymentCondition: document.getElementById('paymentCondition').value,
-                        otherRequirements: document.getElementById('otherRequirements').value,
-                        preparerName: document.getElementById('preparerName').value,
-                        warehouseStaffName: document.getElementById('warehouseStaffName').value
-                    },
-                    products: []
-                };
-            }
-            
-            // Điền dữ liệu vào form
             function populateFormData(formData) {
                 if (!formData.deliveryInfo) return;
                 
@@ -787,7 +795,6 @@
                 document.getElementById('preparerName').value = formData.deliveryInfo.preparerName || '';
                 document.getElementById('warehouseStaffName').value = formData.deliveryInfo.warehouseStaffName || '';
                 
-                // Xóa dữ liệu cũ và thêm sản phẩm
                 productTableBody.innerHTML = '';
                 productCount = 0;
                 
@@ -798,7 +805,6 @@
                 }
             }
             
-            // Tải danh sách file PDF đã lưu
             function loadSavedFiles() {
                 if (!db) return;
                 
@@ -808,12 +814,10 @@
                     .onSnapshot((snapshot) => {
                         const filesList = document.getElementById('filesList');
                         filesList.innerHTML = '';
-                        
                         if (snapshot.empty) {
                             filesList.innerHTML = '<div class="file-item"><div class="file-info"><div class="file-name">Chưa có file nào được lưu</div></div></div>';
                             return;
                         }
-                        
                         snapshot.forEach((doc) => {
                             const fileData = doc.data();
                             const fileItem = document.createElement('div');
@@ -829,8 +833,6 @@
                             `;
                             filesList.appendChild(fileItem);
                         });
-                        
-                        // Thêm sự kiện cho nút tải về
                         document.querySelectorAll('.download-pdf').forEach(button => {
                             button.addEventListener('click', function() {
                                 const url = this.getAttribute('data-url');
@@ -840,20 +842,17 @@
                     });
             }
             
-            // Lưu file PDF lên Firebase Storage
             function savePdfToFirebase(pdfBlob, fileName) {
                 if (!storage || !db) {
                     showMessage('Không thể kết nối với Firebase', 'error');
                     return;
                 }
-                
                 const storageRef = storage.ref();
                 const pdfRef = storageRef.child(`pdfs/${fileName}`);
                 
                 pdfRef.put(pdfBlob).then((snapshot) => {
                     return snapshot.ref.getDownloadURL();
                 }).then((downloadURL) => {
-                    // Lưu thông tin file vào Firestore
                     return db.collection('savedPdfs').add({
                         fileName: fileName,
                         downloadURL: downloadURL,
@@ -867,9 +866,7 @@
                 });
             }
             
-            // Xử lý upload file Excel
             const dataFileInput = document.getElementById('dataFile');
-            
             dataFileInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
@@ -878,18 +875,12 @@
                         try {
                             const data = new Uint8Array(e.target.result);
                             const workbook = XLSX.read(data, { type: 'array' });
-                            
-                            // Lấy sheet đầu tiên
                             const firstSheetName = workbook.SheetNames[0];
                             const worksheet = workbook.Sheets[firstSheetName];
-                            
-                            // Chuyển đổi sheet thành JSON
                             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                             
-                            // Tìm hàng chứa tiêu đề
                             let headerRowIndex = -1;
                             let headerRow = [];
-                            
                             for (let i = 0; i < jsonData.length; i++) {
                                 const row = jsonData[i];
                                 if (row && row.includes('STT') && (row.includes('Tên Hàng Hóa') || row.includes('Tên hàng'))) {
@@ -904,41 +895,29 @@
                                 return;
                             }
                             
-                            // Tạo mapping từ tiêu đề sang tên cột
                             const columnMapping = {};
                             headerRow.forEach((header, index) => {
-                                if (header) {
-                                    columnMapping[header] = index;
-                                }
+                                if (header) columnMapping[header] = index;
                             });
                             
-                            // Xóa dữ liệu cũ
                             productTableBody.innerHTML = '';
                             productCount = 0;
-                            
-                            // Thêm dữ liệu mới từ Excel (bắt đầu từ hàng sau header)
                             let importedCount = 0;
+                            
                             for (let i = headerRowIndex + 1; i < jsonData.length; i++) {
                                 const row = jsonData[i];
                                 if (row && row.length > 0 && row[0] !== undefined && row[0] !== '') {
                                     const productData = {};
-                                    
-                                    // Ánh xạ dữ liệu từ cột theo tiêu đề
                                     Object.keys(columnMapping).forEach(header => {
                                         const colIndex = columnMapping[header];
-                                        if (colIndex < row.length) {
-                                            productData[header] = row[colIndex];
-                                        }
+                                        if (colIndex < row.length) productData[header] = row[colIndex];
                                     });
-                                    
                                     addNewProductRow(productData);
                                     importedCount++;
                                 }
                             }
-                            
                             showMessage(`Đã tải lên ${importedCount} sản phẩm từ file Excel!`, 'success');
-                            saveDataToFirebase(); // Đồng bộ sau khi import
-                            
+                            saveDataToFirebase();
                         } catch (error) {
                             console.error('Lỗi khi đọc file Excel:', error);
                             showMessage('Lỗi khi đọc file Excel: ' + error.message, 'error');
@@ -948,38 +927,20 @@
                 }
             });
             
-            // Xử lý lưu biên bản và tạo PDF
-            document.getElementById('saveBtn').addEventListener('click', function() {
-                saveDataAndCreatePDF();
-            });
-            
+            document.getElementById('saveBtn').addEventListener('click', function() { saveDataAndCreatePDF(); });
             function saveDataAndCreatePDF() {
-                // Lưu dữ liệu lên Firebase
                 saveDataToFirebase();
-                
-                // Tạo PDF và lưu lên Firebase
                 createAndSavePDF();
             }
             
             function createAndSavePDF() {
-                // Ẩn các nút khi tạo PDF
                 const noPrintElements = document.querySelectorAll('.no-print');
-                noPrintElements.forEach(el => {
-                    el.style.display = 'none';
-                });
+                noPrintElements.forEach(el => el.style.display = 'none');
                 
-                // Tạo PDF mới
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-                
-                // Lấy nội dung HTML để chuyển đổi
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
                 const element = document.getElementById('contentToPrint');
                 
-                // Sử dụng html2canvas để chụp nội dung
                 html2canvas(element, {
                     scale: 2,
                     useCORS: true,
@@ -988,19 +949,14 @@
                     height: element.scrollHeight
                 }).then(canvas => {
                     const imgData = canvas.toDataURL('image/png');
-                    
-                    // Tính toán kích thước cho PDF
                     const imgWidth = doc.internal.pageSize.getWidth();
                     const pageHeight = doc.internal.pageSize.getHeight();
                     const imgHeight = canvas.height * imgWidth / canvas.width;
                     let heightLeft = imgHeight;
                     let position = 0;
                     
-                    // Thêm trang đầu tiên
                     doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
                     heightLeft -= pageHeight;
-                    
-                    // Thêm các trang tiếp theo nếu nội dung quá dài
                     while (heightLeft >= 0) {
                         position = heightLeft - imgHeight;
                         doc.addPage();
@@ -1008,211 +964,123 @@
                         heightLeft -= pageHeight;
                     }
                     
-                    // Tạo tên file
                     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
                     const fileName = `Bien-ban-nhan-hang-${timestamp}.pdf`;
                     
-                    // Lưu file PDF lên Firebase
                     const pdfBlob = doc.output('blob');
                     savePdfToFirebase(pdfBlob, fileName);
-                    
-                    // Tải về local
                     doc.save(fileName);
-                    
-                    // Hiển thị lại các nút
-                    noPrintElements.forEach(el => {
-                        el.style.display = '';
-                    });
+                    noPrintElements.forEach(el => el.style.display = '');
                 });
             }
+
+            document.getElementById('exportExcelBtn').addEventListener('click', function() { exportToExcel(); });
+            function exportToExcel() {
+                const wb = XLSX.utils.book_new();
+                const excelData = [
+                    ['BIÊN BẢN NHẬN HÀNG - CÔNG TY TNHH TM DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ IDECO'],
+                    ['Mã biên bản: BMI.06', '', '', '', '', '', `Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`],
+                    [''],
+                    ['THÔNG TIN NHẬN HÀNG'],
+                    ['Tên nhà cung cấp:', document.getElementById('supplierName').value, '', '', 'Hóa đơn:', document.getElementById('invoiceNumber').value],
+                    ['Số hợp đồng:', document.getElementById('contractNumber').value, '', '', 'Nơi nhận hàng:', document.getElementById('receivingPlace').value],
+                    ['Ngày nhận:', document.getElementById('receivingDate').value, '', '', 'Giờ nhận:', document.getElementById('receivingTime').value],
+                    ['Kết quả kiểm nghiệm:', document.getElementById('inspectionResult').value],
+                    [''],
+                    ['THÔNG TIN GIAO NHẬN'],
+                    ['Giao nhận vận chuyển:', document.getElementById('deliveryTransport').value],
+                    ['Điều kiện thanh toán:', document.getElementById('paymentCondition').value],
+                    ['Các yêu cầu khác:', document.getElementById('otherRequirements').value],
+                    [''],
+                    ['DANH MỤC THUỐC NHẬN HÀNG'],
+                    ['STT', 'Tên hàng', 'Đơn vị tính', 'Số Lô', 'Hạn sử dụng', 'Số lượng Thực tế', 'Thừa', 'Thiếu', 'Hư hỏng', 'Tình trạng', 'Ghi chú']
+                ];
+                
+                const productRows = productTableBody.querySelectorAll('tr');
+                productRows.forEach(row => {
+                    const productRow = [
+                        row.cells[0].textContent,
+                        row.querySelector('textarea[name="productName"]').value, // Sửa: lấy value từ textarea
+                        row.querySelector('input[name="unit"]').value,
+                        row.querySelector('input[name="lotNumber"]').value,
+                        row.querySelector('input[name="expiryDate"]').value,
+                        row.querySelector('input[name="actualQuantity"]').value,
+                        row.querySelector('input[name="excessQuantity"]').value,
+                        row.querySelector('input[name="shortageQuantity"]').value,
+                        row.querySelector('input[name="damagedQuantity"]').value,
+                        row.querySelector('select[name="packageCondition"]').value,
+                        row.querySelector('input[name="note"]').value
+                    ];
+                    excelData.push(productRow);
+                });
+                
+                excelData.push(['']);
+                excelData.push(['TỔNG HỢP']);
+                excelData.push(['Tổng số sản phẩm:', productRows.length]);
+                excelData.push(['Tổng số lượng thực tế:', calculateTotal('actualQuantity')]);
+                excelData.push(['']);
+                
+                const conditionStats = countPackageConditions();
+                Object.keys(conditionStats).forEach(condition => {
+                    excelData.push([condition + ':', conditionStats[condition]]);
+                });
+                
+                excelData.push(['']);
+                excelData.push(['NGƯỜI LẬP BIÊN BẢN', '', '', '', '', 'BỘ PHẬN KHO']);
+                excelData.push([document.getElementById('preparerName').value, '', '', '', '', document.getElementById('warehouseStaffName').value]);
+                
+                const ws = XLSX.utils.aoa_to_sheet(excelData);
+                XLSX.utils.book_append_sheet(wb, ws, 'Biên bản nhận hàng');
+                XLSX.writeFile(wb, `Bien-ban-nhan-hang-${formatDateForFileName()}.xlsx`);
+                showMessage('Đã xuất file Excel thành công!', 'success');
+            }
+
+            function calculateTotal(fieldName) {
+                let total = 0;
+                const productRows = productTableBody.querySelectorAll('tr');
+                productRows.forEach(row => {
+                    const input = row.querySelector(`input[name="${fieldName}"]`);
+                    if (input && input.value) total += parseInt(input.value) || 0;
+                });
+                return total;
+            }
+
+            function countPackageConditions() {
+                const conditions = {};
+                const productRows = productTableBody.querySelectorAll('tr');
+                productRows.forEach(row => {
+                    const select = row.querySelector('select[name="packageCondition"]');
+                    if (select) {
+                        const condition = select.value;
+                        conditions[condition] = (conditions[condition] || 0) + 1;
+                    }
+                });
+                return conditions;
+            }
+
+            function formatDateForFileName() {
+                const now = new Date();
+                return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            }
             
-            // Xử lý xuất Excel
-          // Xử lý xuất Excel
-document.getElementById('exportExcelBtn').addEventListener('click', function() {
-    exportToExcel();
-});
-
-function exportToExcel() {
-    // Tạo workbook mới
-    const wb = XLSX.utils.book_new();
-    
-    // === DỮ LIỆU CHO 1 SHEET DUY NHẤT ===
-    const excelData = [
-        // Tiêu đề biên bản
-        ['BIÊN BẢN NHẬN HÀNG - CÔNG TY TNHH TM DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ IDECO'],
-        ['Mã biên bản: BMI.06', '', '', '', '', '', `Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`],
-        [''],
-        
-        // Thông tin nhận hàng
-        ['THÔNG TIN NHẬN HÀNG'],
-        ['Tên nhà cung cấp:', document.getElementById('supplierName').value, '', '', 'Hóa đơn:', document.getElementById('invoiceNumber').value],
-        ['Số hợp đồng:', document.getElementById('contractNumber').value, '', '', 'Nơi nhận hàng:', document.getElementById('receivingPlace').value],
-        ['Ngày nhận:', document.getElementById('receivingDate').value, '', '', 'Giờ nhận:', document.getElementById('receivingTime').value],
-        ['Kết quả kiểm nghiệm:', document.getElementById('inspectionResult').value],
-        [''],
-        
-        // Thông tin giao nhận
-        ['THÔNG TIN GIAO NHẬN'],
-        ['Giao nhận vận chuyển:', document.getElementById('deliveryTransport').value],
-        ['Điều kiện thanh toán:', document.getElementById('paymentCondition').value],
-        ['Các yêu cầu khác:', document.getElementById('otherRequirements').value],
-        [''],
-        
-        // Tiêu đề bảng sản phẩm
-        ['DANH MỤC THUỐC NHẬN HÀNG'],
-        ['STT', 'Tên hàng', 'Đơn vị tính', 'Số Lô', 'Hạn sử dụng', 'Số lượng Thực tế', 'Thừa', 'Thiếu', 'Hư hỏng', 'Tình trạng', 'Ghi chú']
-    ];
-    
-    // Dữ liệu sản phẩm
-    const productRows = productTableBody.querySelectorAll('tr');
-    productRows.forEach(row => {
-        const productRow = [
-            row.cells[0].textContent,
-            row.querySelector('input[name="productName"]').value,
-            row.querySelector('input[name="unit"]').value,
-            row.querySelector('input[name="lotNumber"]').value,
-            row.querySelector('input[name="expiryDate"]').value,
-            row.querySelector('input[name="actualQuantity"]').value,
-            row.querySelector('input[name="excessQuantity"]').value,
-            row.querySelector('input[name="shortageQuantity"]').value,
-            row.querySelector('input[name="damagedQuantity"]').value,
-            row.querySelector('select[name="packageCondition"]').value,
-            row.querySelector('input[name="note"]').value
-        ];
-        excelData.push(productRow);
-    });
-    
-    // Thông tin tổng hợp
-    excelData.push(['']);
-    excelData.push(['TỔNG HỢP']);
-    excelData.push(['Tổng số sản phẩm:', productRows.length]);
-    excelData.push(['Tổng số lượng thực tế:', calculateTotal('actualQuantity')]);
-    excelData.push(['Tổng số lượng thừa:', calculateTotal('excessQuantity')]);
-    excelData.push(['Tổng số lượng thiếu:', calculateTotal('shortageQuantity')]);
-    excelData.push(['Tổng số lượng hư hỏng:', calculateTotal('damagedQuantity')]);
-    excelData.push(['']);
-    
-    // Thống kê tình trạng
-    excelData.push(['THỐNG KÊ TÌNH TRẠNG']);
-    const conditionStats = countPackageConditions();
-    Object.keys(conditionStats).forEach(condition => {
-        excelData.push([condition + ':', conditionStats[condition]]);
-    });
-    
-    excelData.push(['']);
-    
-    // Thông tin ký xác nhận
-    excelData.push(['NGƯỜI LẬP BIÊN BẢN', '', '', '', '', 'BỘ PHẬN KHO']);
-    excelData.push([document.getElementById('preparerName').value, '', '', '', '', document.getElementById('warehouseStaffName').value]);
-    
-    // Tạo worksheet
-    const ws = XLSX.utils.aoa_to_sheet(excelData);
-    
-    // Thiết lập độ rộng cột (tùy chọn)
-    const colWidths = [
-        { wch: 5 },  // STT
-        { wch: 25 }, // Tên hàng
-        { wch: 10 }, // Đơn vị tính
-        { wch: 12 }, // Số Lô
-        { wch: 12 }, // Hạn sử dụng
-        { wch: 10 }, // Số lượng Thực tế
-        { wch: 8 },  // Thừa
-        { wch: 8 },  // Thiếu
-        { wch: 10 }, // Hư hỏng
-        { wch: 15 }, // Tình trạng
-        { wch: 15 }  // Ghi chú
-    ];
-    ws['!cols'] = colWidths;
-    
-    // Thêm worksheet vào workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'Biên bản nhận hàng');
-    
-    // Xuất file Excel
-    const fileName = `Bien-ban-nhan-hang-${formatDateForFileName()}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-    showMessage('Đã xuất file Excel thành công với đầy đủ thông tin trong 1 sheet!', 'success');
-}
-
-// Hàm tính tổng số lượng
-function calculateTotal(fieldName) {
-    let total = 0;
-    const productRows = productTableBody.querySelectorAll('tr');
-    productRows.forEach(row => {
-        const input = row.querySelector(`input[name="${fieldName}"]`);
-        if (input && input.value) {
-            total += parseInt(input.value) || 0;
-        }
-    });
-    return total;
-}
-
-// Hàm thống kê tình trạng đóng gói
-function countPackageConditions() {
-    const conditions = {};
-    const productRows = productTableBody.querySelectorAll('tr');
-    
-    productRows.forEach(row => {
-        const select = row.querySelector('select[name="packageCondition"]');
-        if (select) {
-            const condition = select.value;
-            conditions[condition] = (conditions[condition] || 0) + 1;
-        }
-    });
-    
-    return conditions;
-}
-
-// Hàm định dạng ngày cho tên file
-function formatDateForFileName() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    
-    return `${year}${month}${day}-${hours}${minutes}`;
-}
-            
-            // Xử lý xuất PDF
             const exportPdfBtn = document.getElementById('exportPdfBtn');
             const pdfOptions = document.getElementById('pdfOptions');
             const confirmExportPdf = document.getElementById('confirmExportPdf');
             const cancelExportPdf = document.getElementById('cancelExportPdf');
             
-            exportPdfBtn.addEventListener('click', function() {
-                pdfOptions.style.display = 'block';
-            });
-            
-            cancelExportPdf.addEventListener('click', function() {
-                pdfOptions.style.display = 'none';
-            });
+            exportPdfBtn.addEventListener('click', function() { pdfOptions.style.display = 'block'; });
+            cancelExportPdf.addEventListener('click', function() { pdfOptions.style.display = 'none'; });
             
             confirmExportPdf.addEventListener('click', function() {
                 const orientation = document.querySelector('input[name="pageOrientation"]:checked').value;
-                exportToPDF(orientation);
-                pdfOptions.style.display = 'none';
-            });
-            
-            function exportToPDF(orientation = 'portrait') {
-                // Ẩn các nút khi xuất PDF
+                // Tạm thời ẩn các nút khi xuất PDF
                 const noPrintElements = document.querySelectorAll('.no-print');
-                noPrintElements.forEach(el => {
-                    el.style.display = 'none';
-                });
+                noPrintElements.forEach(el => el.style.display = 'none');
                 
-                // Tạo PDF mới
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
-                    orientation: orientation,
-                    unit: 'mm',
-                    format: 'a4'
-                });
-                
-                // Lấy nội dung HTML để chuyển đổi
+                const doc = new jsPDF({ orientation: orientation, unit: 'mm', format: 'a4' });
                 const element = document.getElementById('contentToPrint');
                 
-                // Sử dụng html2canvas để chụp nội dung
                 html2canvas(element, {
                     scale: 2,
                     useCORS: true,
@@ -1221,74 +1089,48 @@ function formatDateForFileName() {
                     height: element.scrollHeight
                 }).then(canvas => {
                     const imgData = canvas.toDataURL('image/png');
-                    
-                    // Tính toán kích thước cho PDF
                     const imgWidth = doc.internal.pageSize.getWidth();
                     const pageHeight = doc.internal.pageSize.getHeight();
                     const imgHeight = canvas.height * imgWidth / canvas.width;
                     let heightLeft = imgHeight;
                     let position = 0;
                     
-                    // Thêm trang đầu tiên
                     doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
                     heightLeft -= pageHeight;
-                    
-                    // Thêm các trang tiếp theo nếu nội dung quá dài
                     while (heightLeft >= 0) {
                         position = heightLeft - imgHeight;
                         doc.addPage();
                         doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
                         heightLeft -= pageHeight;
                     }
-                    
-                    // Lưu file PDF
                     doc.save('Bien-ban-nhan-hang.pdf');
-                    
-                    // Hiển thị lại các nút sau khi xuất PDF
-                    noPrintElements.forEach(el => {
-                        el.style.display = '';
-                    });
+                    noPrintElements.forEach(el => el.style.display = '');
                 });
-            }
-            
-            // Xử lý in biên bản
-            document.getElementById('printBtn').addEventListener('click', function() {
-                window.print();
+                pdfOptions.style.display = 'none';
             });
             
-            // Xử lý làm mới form
+            document.getElementById('printBtn').addEventListener('click', function() { window.print(); });
+            
             document.getElementById('resetBtn').addEventListener('click', function() {
                 if (confirm('Bạn có chắc chắn muốn làm mới biên bản? Tất cả dữ liệu chưa lưu sẽ bị mất.')) {
                     document.querySelectorAll('input, select, textarea').forEach(element => {
-                        if (element.id !== 'receivingPlace') {
-                            element.value = '';
-                        }
+                        if (element.id !== 'receivingPlace') element.value = '';
                     });
-                    
-                    // Xóa tất cả sản phẩm
                     productTableBody.innerHTML = '';
                     productCount = 0;
-                    
-                    // Reset ngày và giờ về hiện tại
                     const now = new Date();
                     document.getElementById('receivingDate').valueAsDate = now;
                     document.getElementById('receivingTime').value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-                    
-                    // Đồng bộ lên Firebase
                     saveDataToFirebase();
                 }
             });
             
-            // Thiết lập ngày và giờ mặc định
             const now = new Date();
             document.getElementById('receivingDate').valueAsDate = now;
             document.getElementById('receivingTime').value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             
-            // Tự động lưu khi có thay đổi
             document.querySelectorAll('input, select, textarea').forEach(element => {
-                element.addEventListener('change', function() {
-                    saveDataToFirebase();
-                });
+                element.addEventListener('change', function() { saveDataToFirebase(); });
             });
         });
     </script>
