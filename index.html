@@ -1027,46 +1027,152 @@
             }
             
             // Xử lý xuất Excel
-            document.getElementById('exportExcelBtn').addEventListener('click', function() {
-                exportToExcel();
-            });
-            
-            function exportToExcel() {
-                // Tạo workbook mới
-                const wb = XLSX.utils.book_new();
-                
-                // Chuẩn bị dữ liệu cho sheet sản phẩm
-                const productData = [['STT', 'Tên hàng', 'Đơn vị tính', 'Số Lô', 'Hạn sử dụng', 'Số lượng Thực tế', 'Thừa', 'Thiếu', 'Hư hỏng', 'Tình trạng', 'Ghi chú']];
-                
-                // Thu thập dữ liệu sản phẩm
-                const productRows = productTableBody.querySelectorAll('tr');
-                productRows.forEach(row => {
-                    const productRow = [
-                        row.cells[0].textContent,
-                        row.querySelector('input[name="productName"]').value,
-                        row.querySelector('input[name="unit"]').value,
-                        row.querySelector('input[name="lotNumber"]').value,
-                        row.querySelector('input[name="expiryDate"]').value,
-                        row.querySelector('input[name="actualQuantity"]').value,
-                        row.querySelector('input[name="excessQuantity"]').value,
-                        row.querySelector('input[name="shortageQuantity"]').value,
-                        row.querySelector('input[name="damagedQuantity"]').value,
-                        row.querySelector('select[name="packageCondition"]').value,
-                        row.querySelector('input[name="note"]').value
-                    ];
-                    productData.push(productRow);
-                });
-                
-                // Tạo worksheet
-                const ws = XLSX.utils.aoa_to_sheet(productData);
-                
-                // Thêm worksheet vào workbook
-                XLSX.utils.book_append_sheet(wb, ws, 'Danh mục thuốc');
-                
-                // Xuất file Excel
-                XLSX.writeFile(wb, 'Bien-ban-nhan-hang.xlsx');
-                showMessage('Đã xuất file Excel thành công!', 'success');
-            }
+          // Xử lý xuất Excel
+document.getElementById('exportExcelBtn').addEventListener('click', function() {
+    exportToExcel();
+});
+
+function exportToExcel() {
+    // Tạo workbook mới
+    const wb = XLSX.utils.book_new();
+    
+    // === DỮ LIỆU CHO 1 SHEET DUY NHẤT ===
+    const excelData = [
+        // Tiêu đề biên bản
+        ['BIÊN BẢN NHẬN HÀNG - CÔNG TY TNHH TM DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ IDECO'],
+        ['Mã biên bản: BMI.06', '', '', '', '', '', `Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`],
+        [''],
+        
+        // Thông tin nhận hàng
+        ['THÔNG TIN NHẬN HÀNG'],
+        ['Tên nhà cung cấp:', document.getElementById('supplierName').value, '', '', 'Hóa đơn:', document.getElementById('invoiceNumber').value],
+        ['Số hợp đồng:', document.getElementById('contractNumber').value, '', '', 'Nơi nhận hàng:', document.getElementById('receivingPlace').value],
+        ['Ngày nhận:', document.getElementById('receivingDate').value, '', '', 'Giờ nhận:', document.getElementById('receivingTime').value],
+        ['Kết quả kiểm nghiệm:', document.getElementById('inspectionResult').value],
+        [''],
+        
+        // Thông tin giao nhận
+        ['THÔNG TIN GIAO NHẬN'],
+        ['Giao nhận vận chuyển:', document.getElementById('deliveryTransport').value],
+        ['Điều kiện thanh toán:', document.getElementById('paymentCondition').value],
+        ['Các yêu cầu khác:', document.getElementById('otherRequirements').value],
+        [''],
+        
+        // Tiêu đề bảng sản phẩm
+        ['DANH MỤC THUỐC NHẬN HÀNG'],
+        ['STT', 'Tên hàng', 'Đơn vị tính', 'Số Lô', 'Hạn sử dụng', 'Số lượng Thực tế', 'Thừa', 'Thiếu', 'Hư hỏng', 'Tình trạng', 'Ghi chú']
+    ];
+    
+    // Dữ liệu sản phẩm
+    const productRows = productTableBody.querySelectorAll('tr');
+    productRows.forEach(row => {
+        const productRow = [
+            row.cells[0].textContent,
+            row.querySelector('input[name="productName"]').value,
+            row.querySelector('input[name="unit"]').value,
+            row.querySelector('input[name="lotNumber"]').value,
+            row.querySelector('input[name="expiryDate"]').value,
+            row.querySelector('input[name="actualQuantity"]').value,
+            row.querySelector('input[name="excessQuantity"]').value,
+            row.querySelector('input[name="shortageQuantity"]').value,
+            row.querySelector('input[name="damagedQuantity"]').value,
+            row.querySelector('select[name="packageCondition"]').value,
+            row.querySelector('input[name="note"]').value
+        ];
+        excelData.push(productRow);
+    });
+    
+    // Thông tin tổng hợp
+    excelData.push(['']);
+    excelData.push(['TỔNG HỢP']);
+    excelData.push(['Tổng số sản phẩm:', productRows.length]);
+    excelData.push(['Tổng số lượng thực tế:', calculateTotal('actualQuantity')]);
+    excelData.push(['Tổng số lượng thừa:', calculateTotal('excessQuantity')]);
+    excelData.push(['Tổng số lượng thiếu:', calculateTotal('shortageQuantity')]);
+    excelData.push(['Tổng số lượng hư hỏng:', calculateTotal('damagedQuantity')]);
+    excelData.push(['']);
+    
+    // Thống kê tình trạng
+    excelData.push(['THỐNG KÊ TÌNH TRẠNG']);
+    const conditionStats = countPackageConditions();
+    Object.keys(conditionStats).forEach(condition => {
+        excelData.push([condition + ':', conditionStats[condition]]);
+    });
+    
+    excelData.push(['']);
+    
+    // Thông tin ký xác nhận
+    excelData.push(['NGƯỜI LẬP BIÊN BẢN', '', '', '', '', 'BỘ PHẬN KHO']);
+    excelData.push([document.getElementById('preparerName').value, '', '', '', '', document.getElementById('warehouseStaffName').value]);
+    
+    // Tạo worksheet
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
+    
+    // Thiết lập độ rộng cột (tùy chọn)
+    const colWidths = [
+        { wch: 5 },  // STT
+        { wch: 25 }, // Tên hàng
+        { wch: 10 }, // Đơn vị tính
+        { wch: 12 }, // Số Lô
+        { wch: 12 }, // Hạn sử dụng
+        { wch: 10 }, // Số lượng Thực tế
+        { wch: 8 },  // Thừa
+        { wch: 8 },  // Thiếu
+        { wch: 10 }, // Hư hỏng
+        { wch: 15 }, // Tình trạng
+        { wch: 15 }  // Ghi chú
+    ];
+    ws['!cols'] = colWidths;
+    
+    // Thêm worksheet vào workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Biên bản nhận hàng');
+    
+    // Xuất file Excel
+    const fileName = `Bien-ban-nhan-hang-${formatDateForFileName()}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    showMessage('Đã xuất file Excel thành công với đầy đủ thông tin trong 1 sheet!', 'success');
+}
+
+// Hàm tính tổng số lượng
+function calculateTotal(fieldName) {
+    let total = 0;
+    const productRows = productTableBody.querySelectorAll('tr');
+    productRows.forEach(row => {
+        const input = row.querySelector(`input[name="${fieldName}"]`);
+        if (input && input.value) {
+            total += parseInt(input.value) || 0;
+        }
+    });
+    return total;
+}
+
+// Hàm thống kê tình trạng đóng gói
+function countPackageConditions() {
+    const conditions = {};
+    const productRows = productTableBody.querySelectorAll('tr');
+    
+    productRows.forEach(row => {
+        const select = row.querySelector('select[name="packageCondition"]');
+        if (select) {
+            const condition = select.value;
+            conditions[condition] = (conditions[condition] || 0) + 1;
+        }
+    });
+    
+    return conditions;
+}
+
+// Hàm định dạng ngày cho tên file
+function formatDateForFileName() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    return `${year}${month}${day}-${hours}${minutes}`;
+}
             
             // Xử lý xuất PDF
             const exportPdfBtn = document.getElementById('exportPdfBtn');
