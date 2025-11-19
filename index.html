@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý SOP - Chữ ký Mới</title>
+    <title>Quản lý SOP - Fix Lỗi PDF & In</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
@@ -94,11 +94,30 @@
         .no-print { display: block; }
         .section-title { font-size: 16px; font-weight: 600; color: var(--primary-color); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); }
 
+        /* --- NEW: CLASS CHUYỂN ĐỔI ĐỂ IN/XUẤT PDF --- */
+        .print-substitution {
+            display: block;
+            width: 100%;
+            font-family: inherit;
+            font-size: 13px;
+            padding: 8px 10px;
+            line-height: 1.4;
+            white-space: pre-wrap; /* Giữ xuống dòng */
+            word-break: break-word;
+            min-height: 34px;
+        }
+
         @media print {
             .no-print, .no-print * { display: none !important; }
             body { padding: 0; background-color: white; }
-            .container { box-shadow: none; padding: 10px; max-width: 100%; }
+            .container { box-shadow: none; padding: 10px; max-width: 100%; border: none; }
             table { font-size: 12px; }
+            /* Ẩn input thật, hiện text thay thế khi in native */
+            textarea, input[type="text"], input[type="date"], input[type="time"], input[type="number"] {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+            }
         }
 
         /* --- MODAL --- */
@@ -121,7 +140,7 @@
                 <img src="https://cdn.imgpile.com/f/ZMtwhK9_xl.png" alt="Logo công ty" class="logo">
             </div>
             <div class="company-info">
-                <div class="company-name">CÔNG TY TNHH TM DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ (IDECO) </div>
+                <div class="company-name">CÔNG TY TNHH TM DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ IDECO</div>
                 <div class="document-title">BIÊN BẢN NHẬN HÀNG</div>
                 <div class="document-code">BMI.06</div>
             </div>
@@ -173,7 +192,7 @@
         </div>
 
         <div class="compact-form-section">
-            <div class="section-title">Danh mục nhận hàng</div>
+            <div class="section-title">Danh mục thuốc nhận hàng</div>
             <table id="productTable" class="compact-table">
                 <thead>
                     <tr>
@@ -212,7 +231,7 @@
                 <input type="text" id="preparerName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none;">
             </div>
             <div class="signature-box">
-                <div class="signature-line">Ds phụ trách chuyên môn</div>
+                <div class="signature-line">Phụ trách chuyên môn</div>
                 <input type="text" id="warehouseStaffName" value="Nguyễn Minh Tâm" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none;">
             </div>
         </div>
@@ -304,6 +323,45 @@
             if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
             return dateString;
         }
+
+        // --- HELPER: CHUYỂN INPUT THÀNH TEXT ĐỂ IN/PDF ---
+        // Đây là hàm quan trọng để sửa lỗi mất chữ khi xuất PDF
+        function toggleInputsForExport(isExporting) {
+            // Xử lý Textarea và Input
+            document.querySelectorAll('textarea, input:not([type="button"]):not([type="radio"]):not([type="checkbox"]):not([type="file"]), select').forEach(el => {
+                if (isExporting) {
+                    // Tạo div thay thế
+                    const div = document.createElement('div');
+                    div.className = 'print-substitution';
+                    // Copy style cơ bản
+                    div.style.width = el.style.width || '100%';
+                    div.style.textAlign = window.getComputedStyle(el).textAlign;
+                    
+                    // Lấy nội dung
+                    if (el.tagName === 'SELECT') {
+                        div.textContent = el.options[el.selectedIndex]?.text || '';
+                    } else {
+                        div.textContent = el.value;
+                    }
+                    
+                    // Đánh dấu để xóa sau này
+                    div.dataset.subFor = el.name || el.id;
+                    
+                    // Ẩn element gốc, hiện div
+                    el.style.display = 'none';
+                    el.parentNode.insertBefore(div, el);
+                } else {
+                    // Khôi phục: Xóa div thay thế, hiện lại input
+                    const sub = el.parentNode.querySelector(`.print-substitution[data-subFor="${el.name || el.id}"]`);
+                    if (sub) sub.remove();
+                    el.style.display = '';
+                }
+            });
+        }
+
+        // --- XỬ LÝ SỰ KIỆN IN TRÌNH DUYỆT (Ctrl+P) ---
+        window.onbeforeprint = () => toggleInputsForExport(true);
+        window.onafterprint = () => toggleInputsForExport(false);
 
         // --- COLUMN RESIZE ---
         function makeTableResizable() {
@@ -452,17 +510,36 @@
                 reader.readAsArrayBuffer(file);
             });
 
-            // --- PDF EXPORT ---
+            // --- PDF EXPORT (ĐÃ SỬA) ---
             const pdfModal = document.getElementById('pdfOptions');
             document.getElementById('exportPdfBtn').onclick = () => pdfModal.style.display = 'block';
             document.getElementById('cancelExportPdf').onclick = () => pdfModal.style.display = 'none';
+            
+            // Sửa lại nút In (Print)
+            document.getElementById('printBtn').onclick = () => {
+                window.print(); 
+            };
+
             document.getElementById('confirmExportPdf').onclick = () => {
                 const ori = document.querySelector('input[name="pageOrientation"]:checked').value;
+                
+                // 1. Ẩn các nút không cần thiết
                 document.querySelectorAll('.no-print').forEach(e => e.style.display = 'none');
+                
+                // 2. Chuyển Input/Textarea thành Text tĩnh để chụp hình chuẩn
+                toggleInputsForExport(true);
+
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ orientation: ori, unit: 'mm', format: 'a4' });
                 const el = document.getElementById('contentToPrint');
-                html2canvas(el, { scale: 2, useCORS: true, width: el.scrollWidth, height: el.scrollHeight }).then(cv => {
+                
+                html2canvas(el, { 
+                    scale: 2, 
+                    useCORS: true, 
+                    width: el.scrollWidth, 
+                    height: el.scrollHeight,
+                    windowWidth: el.scrollWidth
+                }).then(cv => {
                     const img = cv.toDataURL('image/png');
                     const w = doc.internal.pageSize.getWidth();
                     const h = doc.internal.pageSize.getHeight();
@@ -474,6 +551,9 @@
                     const name = `Bien-ban-${new Date().toISOString().slice(0,19).replace(/[-:]/g,'')}.pdf`;
                     savePdfToDb(doc.output('blob'), name);
                     doc.save(name);
+                    
+                    // 3. Khôi phục lại trạng thái ban đầu
+                    toggleInputsForExport(false);
                     document.querySelectorAll('.no-print').forEach(e => e.style.display = '');
                     pdfModal.style.display = 'none';
                 });
@@ -552,7 +632,7 @@
                     otherRequirements: document.getElementById('otherRequirements').value,
                     preparerName: document.getElementById('preparerName').value,
                     warehouseStaffName: document.getElementById('warehouseStaffName').value,
-                    deptStaffName: document.getElementById('deptStaffName').value // NEW field
+                    deptStaffName: document.getElementById('deptStaffName').value
                 }, products: prods
             };
         }
@@ -579,7 +659,7 @@
                     document.getElementById('otherRequirements').value = info.otherRequirements||'';
                     document.getElementById('preparerName').value = info.preparerName||'';
                     document.getElementById('warehouseStaffName').value = info.warehouseStaffName||'Nguyễn Minh Tâm';
-                    document.getElementById('deptStaffName').value = info.deptStaffName||''; // Load NEW field
+                    document.getElementById('deptStaffName').value = info.deptStaffName||'';
 
                     const tb = document.getElementById('productTableBody'); tb.innerHTML = ''; productCount=0;
                     (d.products||[]).forEach(p => addNewProductRow(p));
