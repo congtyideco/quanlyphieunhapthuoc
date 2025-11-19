@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý SOP - Fix Lỗi PDF & In</title>
+    <title>Quản lý SOP - Đã sửa lỗi trùng lặp</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
@@ -94,7 +94,7 @@
         .no-print { display: block; }
         .section-title { font-size: 16px; font-weight: 600; color: var(--primary-color); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); }
 
-        /* --- NEW: CLASS CHUYỂN ĐỔI ĐỂ IN/XUẤT PDF --- */
+        /* --- PRINT FIX --- */
         .print-substitution {
             display: block;
             width: 100%;
@@ -102,7 +102,7 @@
             font-size: 13px;
             padding: 8px 10px;
             line-height: 1.4;
-            white-space: pre-wrap; /* Giữ xuống dòng */
+            white-space: pre-wrap;
             word-break: break-word;
             min-height: 34px;
         }
@@ -112,7 +112,6 @@
             body { padding: 0; background-color: white; }
             .container { box-shadow: none; padding: 10px; max-width: 100%; border: none; }
             table { font-size: 12px; }
-            /* Ẩn input thật, hiện text thay thế khi in native */
             textarea, input[type="text"], input[type="date"], input[type="time"], input[type="number"] {
                 border: none !important;
                 background: transparent !important;
@@ -172,7 +171,7 @@
             <div class="form-row">
                 <div class="compact-form-group">
                     <label for="receivingPlace">Nơi nhận hàng</label>
-                    <input type="text" id="receivingPlace" value="003 Carlion 5 262/3 Lũy Bán Bích - Phường Tân Phú -Tp. Hồ Chí Minh">
+                    <input type="text" id="receivingPlace">
                 </div>
                 <div class="compact-form-group">
                     <label for="receivingDate">Ngày nhận</label>
@@ -232,7 +231,7 @@
             </div>
             <div class="signature-box">
                 <div class="signature-line">Phụ trách chuyên môn</div>
-                <input type="text" id="warehouseStaffName" value="Nguyễn Minh Tâm" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none;">
+                <input type="text" id="warehouseStaffName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none;">
             </div>
         </div>
 
@@ -324,42 +323,33 @@
             return dateString;
         }
 
-        // --- HELPER: CHUYỂN INPUT THÀNH TEXT ĐỂ IN/PDF ---
-        // Đây là hàm quan trọng để sửa lỗi mất chữ khi xuất PDF
+        // --- FIX LỖI CHE CHỮ & TRÙNG LẶP KHI IN/PDF ---
         function toggleInputsForExport(isExporting) {
-            // Xử lý Textarea và Input
+            // Bước 1: Xóa sạch các lớp giả lập cũ nếu có để tránh trùng lặp
+            document.querySelectorAll('.print-substitution').forEach(el => el.remove());
+
             document.querySelectorAll('textarea, input:not([type="button"]):not([type="radio"]):not([type="checkbox"]):not([type="file"]), select').forEach(el => {
                 if (isExporting) {
-                    // Tạo div thay thế
                     const div = document.createElement('div');
                     div.className = 'print-substitution';
-                    // Copy style cơ bản
                     div.style.width = el.style.width || '100%';
                     div.style.textAlign = window.getComputedStyle(el).textAlign;
                     
-                    // Lấy nội dung
                     if (el.tagName === 'SELECT') {
                         div.textContent = el.options[el.selectedIndex]?.text || '';
                     } else {
                         div.textContent = el.value;
                     }
-                    
-                    // Đánh dấu để xóa sau này
                     div.dataset.subFor = el.name || el.id;
                     
-                    // Ẩn element gốc, hiện div
                     el.style.display = 'none';
                     el.parentNode.insertBefore(div, el);
                 } else {
-                    // Khôi phục: Xóa div thay thế, hiện lại input
-                    const sub = el.parentNode.querySelector(`.print-substitution[data-subFor="${el.name || el.id}"]`);
-                    if (sub) sub.remove();
                     el.style.display = '';
                 }
             });
         }
 
-        // --- XỬ LÝ SỰ KIỆN IN TRÌNH DUYỆT (Ctrl+P) ---
         window.onbeforeprint = () => toggleInputsForExport(true);
         window.onafterprint = () => toggleInputsForExport(false);
 
@@ -510,36 +500,23 @@
                 reader.readAsArrayBuffer(file);
             });
 
-            // --- PDF EXPORT (ĐÃ SỬA) ---
+            // --- PDF EXPORT ---
             const pdfModal = document.getElementById('pdfOptions');
             document.getElementById('exportPdfBtn').onclick = () => pdfModal.style.display = 'block';
             document.getElementById('cancelExportPdf').onclick = () => pdfModal.style.display = 'none';
             
-            // Sửa lại nút In (Print)
-            document.getElementById('printBtn').onclick = () => {
-                window.print(); 
-            };
+            document.getElementById('printBtn').onclick = () => { window.print(); };
 
             document.getElementById('confirmExportPdf').onclick = () => {
                 const ori = document.querySelector('input[name="pageOrientation"]:checked').value;
-                
-                // 1. Ẩn các nút không cần thiết
                 document.querySelectorAll('.no-print').forEach(e => e.style.display = 'none');
-                
-                // 2. Chuyển Input/Textarea thành Text tĩnh để chụp hình chuẩn
-                toggleInputsForExport(true);
+                toggleInputsForExport(true); // Bật chế độ in (ẩn input, hiện text)
 
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ orientation: ori, unit: 'mm', format: 'a4' });
                 const el = document.getElementById('contentToPrint');
                 
-                html2canvas(el, { 
-                    scale: 2, 
-                    useCORS: true, 
-                    width: el.scrollWidth, 
-                    height: el.scrollHeight,
-                    windowWidth: el.scrollWidth
-                }).then(cv => {
+                html2canvas(el, { scale: 2, useCORS: true, width: el.scrollWidth, height: el.scrollHeight, windowWidth: el.scrollWidth }).then(cv => {
                     const img = cv.toDataURL('image/png');
                     const w = doc.internal.pageSize.getWidth();
                     const h = doc.internal.pageSize.getHeight();
@@ -552,8 +529,7 @@
                     savePdfToDb(doc.output('blob'), name);
                     doc.save(name);
                     
-                    // 3. Khôi phục lại trạng thái ban đầu
-                    toggleInputsForExport(false);
+                    toggleInputsForExport(false); // Tắt chế độ in
                     document.querySelectorAll('.no-print').forEach(e => e.style.display = '');
                     pdfModal.style.display = 'none';
                 });
@@ -658,7 +634,9 @@
                     document.getElementById('paymentCondition').value = info.paymentCondition||'';
                     document.getElementById('otherRequirements').value = info.otherRequirements||'';
                     document.getElementById('preparerName').value = info.preparerName||'';
-                    document.getElementById('warehouseStaffName').value = info.warehouseStaffName||'Nguyễn Minh Tâm';
+                    
+                    // Cập nhật tên mặc định là Phạm Minh Tâm (nếu chưa có dữ liệu)
+                    document.getElementById('warehouseStaffName').value = info.warehouseStaffName || 'Phạm Minh Tâm';
                     document.getElementById('deptStaffName').value = info.deptStaffName||'';
 
                     const tb = document.getElementById('productTableBody'); tb.innerHTML = ''; productCount=0;
