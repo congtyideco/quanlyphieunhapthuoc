@@ -17,7 +17,7 @@
             --text-color: #000;
         }
         
-        * { box-sizing: border-box; font-family: 'Times New Roman', Times, serif; } /* Đổi sang font Times cho trang trọng */
+        * { box-sizing: border-box; font-family: 'Times New Roman', Times, serif; }
         body { margin: 0; padding: 20px; background-color: #f0f2f5; color: var(--text-color); font-size: 14px; }
         
         /* --- CONTAINER: KHUNG VIỀN CHÍNH --- */
@@ -27,7 +27,7 @@
             background-color: white; 
             padding: 15mm 10mm; /* Lề trong */
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-            border: 1px solid #000;
+            border: 4px double #000; /* Viền đôi cho đẹp */
             position: relative;
         }
         
@@ -42,15 +42,7 @@
         
         /* --- Forms --- */
         .compact-form-section { margin-bottom: 10px; }
-        .form-row { display: flex; flex-wrap: wrap; margin-bottom: 5px; }
         
-        /* CSS đặc biệt để labels và inputs nằm cùng dòng cho đẹp (kiểu văn bản) */
-        .inline-field { display: flex; align-items: baseline; margin-right: 15px; margin-bottom: 5px; }
-        .inline-field label { font-weight: bold; margin-right: 5px; white-space: nowrap; }
-        .inline-field input, .inline-field .print-text { border: none; border-bottom: 1px dotted #000; width: 100%; min-width: 100px; padding: 2px 5px; outline: none; font-family: inherit; }
-        .inline-field input:focus { border-bottom: 1px solid #000; }
-
-        /* Phần form thông thường cho nhập liệu */
         .input-group { margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
         .form-control { flex: 1; min-width: 150px; }
         .form-control label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 2px; }
@@ -63,8 +55,6 @@
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; table-layout: fixed; }
         th, td { border: 1px solid #000; padding: 5px; text-align: center; vertical-align: middle; word-wrap: break-word; color: #000; }
         th { background-color: #f0f0f0; font-weight: bold; height: 30px; }
-        
-        /* Cột STT nhỏ */
         th:first-child { width: 35px; }
         
         /* --- Signature --- */
@@ -83,57 +73,28 @@
         .btn { padding: 6px 12px; cursor: pointer; background: #fff; border: 1px solid #000; color: #000; font-weight: bold; border-radius: 3px; margin-right: 5px; }
         .btn:hover { background: #000; color: #fff; }
         
-        /* --- PRINT STYLE (QUAN TRỌNG) --- */
+        /* --- PRINT STYLE --- */
         .print-substitution { display: block; font-weight: 500; border-bottom: 1px dotted #000; padding: 2px; min-height: 20px; }
         
         @media print {
-            @page { size: A4; margin: 10mm; } /* Căn lề giấy in */
+            @page { size: A4; margin: 10mm; } 
             body { padding: 0; background: white; }
-            
-            /* Ẩn các phần không cần thiết */
-            .no-print, .upload-section, .action-buttons, .utility-buttons, .saved-files-section, #connectionStatus, .resizer { 
-                display: none !important; 
-            }
+            .no-print, .upload-section, .action-buttons, .utility-buttons, .saved-files-section, #connectionStatus { display: none !important; }
 
-            /* Container: Bỏ shadow, chỉnh viền đẹp */
             .container {
-                width: 100%;
-                max-width: none;
-                margin: 0;
-                padding: 0; /* Để @page lo phần lề */
-                border: 2px solid #000 !important; /* Viền ngoài đậm */
-                box-shadow: none;
-                padding: 10px; /* Padding nhẹ bên trong viền */
-                height: auto;
+                width: 100%; max-width: none; margin: 0; padding: 5px;
+                border: 2px solid #000 !important; /* Viền đậm khi in */
+                box-shadow: none; height: auto;
             }
 
-            /* Table styles cho in ấn */
             table { border: 1px solid #000; page-break-inside: auto; }
-            tr { page-break-inside: avoid; page-break-after: auto; }
-            thead { display: table-header-group; }
-            tfoot { display: table-footer-group; }
-            
-            /* Chuyển input thành text */
+            tr { page-break-inside: avoid; }
             input, textarea, select { display: none !important; }
-            .print-only-text { display: inline-block !important; }
-            
-            /* Reset layout form */
             .form-control { border: none; margin-bottom: 5px; }
             .form-control label { display: inline-block; width: auto; margin-right: 5px; }
             .form-control label::after { content: ":"; }
-            
-            /* Layout đặc biệt cho phần thông tin chung khi in */
-            .header-info-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
-                gap: 10px;
-                margin-bottom: 15px;
-                border: 1px solid #000;
-                padding: 10px;
-            }
         }
 
-        /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 20px; border: 1px solid #000; width: 90%; max-width: 800px; max-height: 90vh; overflow: auto; }
     </style>
@@ -149,7 +110,8 @@
                 <div class="document-title">BIÊN BẢN NHẬN HÀNG</div>
                 <div class="document-code">Mã số: BM.06</div>
             </div>
-            <div style="width: 100px;"></div> </div>
+            <div style="width: 100px;"></div>
+        </div>
 
         <div id="connectionStatus" class="alert" style="display: none;">
             <span class="status-indicator"></span>
@@ -179,7 +141,7 @@
                     <input type="text" id="receivingPlace">
                 </div>
                 <div class="form-control">
-                    <label>Ngày nhận (dd/mm/yyyy)</label>
+                    <label>Ngày nhận </label>
                     <input type="date" id="receivingDate">
                 </div>
                 <div class="form-control">
@@ -215,8 +177,7 @@
                         <th class="no-print" style="width: 40px;">Xóa</th>
                     </tr>
                 </thead>
-                <tbody id="productTableBody">
-                    </tbody>
+                <tbody id="productTableBody"></tbody>
             </table>
             <button type="button" id="addProductBtn" class="btn no-print" style="margin-top: 5px;">+ Thêm dòng</button>
         </div>
@@ -278,7 +239,7 @@
             <button type="button" id="exportExcelBtn" class="btn">📊 Excel</button>
             <button type="button" id="exportPdfBtn" class="btn">📄 PDF</button>
             <button type="button" id="printBtn" class="btn">🖨️ In ngay</button>
-            <button type="button" id="resetBtn" class="btn" style="border-color: red; color: red;">🔄 Làm mới</button>
+            <button type="button" id="resetBtn" class="btn" style="border-color: red; color: red;">🔄 Làm mới (Thêm mới)</button>
         </div>
         
         <div class="saved-files-section no-print">
@@ -312,7 +273,6 @@
     </div>
 
     <script>
-        // --- CONFIG & INIT ---
         const firebaseConfig = { apiKey: "AIzaSyCM_gZ1DEOtUwB0Ii-dm-6jIpxydoJU4-E", authDomain: "dulieuthuoc-d532e.firebaseapp.com", projectId: "dulieuthuoc-d532e", storageBucket: "dulieuthuoc-d532e.firebasestorage.app", messagingSenderId: "70002622120", appId: "1:70002622120:web:9676e1616a0774bae28c9d", measurementId: "G-LQ5P054T97" };
         let db, storage;
         try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); storage = firebase.storage(); } catch (e) { console.error(e); }
@@ -329,126 +289,106 @@
             return d;
         }
 
-        // --- PRINT & EXPORT LOGIC ---
         function toggleInputsForExport(isExporting) {
-            // Xử lý status bar
             const statusEl = document.getElementById('connectionStatus');
             if(statusEl) statusEl.style.display = isExporting ? 'none' : (db ? 'flex' : 'none');
-
-            // Xử lý Inputs
             document.querySelectorAll('.print-substitution').forEach(e => e.remove());
             document.querySelectorAll('textarea, input, select').forEach(el => {
                 if(['button','file','radio','checkbox','hidden'].includes(el.type)) return;
-                
                 if (isExporting) {
                     const div = document.createElement('div');
                     div.className = 'print-substitution';
                     div.style.textAlign = window.getComputedStyle(el).textAlign;
-                    
                     if (el.tagName === 'SELECT') div.textContent = el.options[el.selectedIndex]?.text || '';
                     else if (el.type === 'date' && el.value) {
                         const p = el.value.split('-');
-                        div.textContent = `${p[2]}/${p[1]}/${p[0]}`; // Định dạng dd/mm/yyyy
-                    } else {
-                        div.textContent = el.value;
-                    }
-                    
+                        div.textContent = `${p[2]}/${p[1]}/${p[0]}`;
+                    } else { div.textContent = el.value; }
                     el.style.display = 'none';
                     el.parentNode.insertBefore(div, el);
-                } else {
-                    el.style.display = '';
-                }
+                } else { el.style.display = ''; }
             });
         }
 
         window.onbeforeprint = () => toggleInputsForExport(true);
         window.onafterprint = () => toggleInputsForExport(false);
 
-        // --- MAIN LOGIC ---
         document.addEventListener('DOMContentLoaded', function() {
-            // Load Data
             loadSuppliers(); loadDataFromFirebase(); loadSavedFiles();
-            
-            // Set Date
             const now = new Date();
             document.getElementById('receivingDate').valueAsDate = now;
             document.getElementById('receivingTime').value = now.toTimeString().slice(0,5);
 
-            // Events
             document.getElementById('addProductBtn').onclick = () => addNewProductRow();
             document.getElementById('saveBtn').onclick = saveDataAndCreatePDF;
+            // Nút Reset đã được gắn sự kiện
             document.getElementById('resetBtn').onclick = resetForm;
             document.getElementById('printBtn').onclick = () => window.print();
             
-            // Network Status
             const cs = document.getElementById('connectionStatus');
             if(db) db.enableNetwork().then(() => { cs.style.display = 'flex'; cs.innerHTML = '<span class="status-indicator" style="background:black"></span> Kết nối OK'; }).catch(() => { cs.innerHTML = 'Lỗi mạng'; });
             
-            // Paste Modal
             setupPasteModal();
-            
-            // Excel Upload
             document.getElementById('dataFile').onchange = handleExcelUpload;
-
-            // PDF Export
             setupPdfExport();
-            
             document.querySelectorAll('input, select, textarea').forEach(e => e.addEventListener('change', saveDataToFirebase));
         });
 
-        // --- PDF FUNCTION ---
+        // --- HÀM RESET FORM MỚI ĐƯỢC THÊM VÀO ---
+        function resetForm() {
+            if(!confirm('Bạn có chắc muốn xóa hết dữ liệu và tạo phiếu mới?')) return;
+            
+            // Xóa dữ liệu trong các ô input (trừ các ô hệ thống)
+            document.querySelectorAll('input, textarea').forEach(el => {
+                if(el.type !== 'button' && el.type !== 'file' && el.type !== 'radio') el.value = '';
+            });
+            
+            // Reset bảng sản phẩm
+            document.getElementById('productTableBody').innerHTML = '';
+            productCount = 0;
+            
+            // Đặt lại ngày giờ hiện tại
+            const now = new Date();
+            document.getElementById('receivingDate').valueAsDate = now;
+            document.getElementById('receivingTime').value = now.toTimeString().slice(0,5);
+            
+            // Đặt lại tên mặc định
+            document.getElementById('warehouseStaffName').value = 'Phạm Minh Tâm';
+            document.getElementById('receivingPlace').value = '003 Carlion 5 262/3 Lũy Bán Bích - Phường Tân Phú -Tp. Hồ Chí Minh';
+
+            // Lưu trạng thái trống lên Firebase
+            saveDataToFirebase();
+        }
+
         function setupPdfExport() {
             const modal = document.getElementById('pdfOptions');
             document.getElementById('exportPdfBtn').onclick = () => modal.style.display = 'flex';
             document.getElementById('cancelExportPdf').onclick = () => modal.style.display = 'none';
-            
             document.getElementById('confirmExportPdf').onclick = () => {
                 const ori = document.querySelector('input[name="pageOrientation"]:checked').value;
-                toggleInputsForExport(true); // Chuyển sang chế độ xem in (ẩn input)
-                
-                // Ẩn tạm thời các nút không in
+                toggleInputsForExport(true);
                 document.querySelectorAll('.no-print').forEach(e => e.style.display = 'none');
-                
                 const element = document.getElementById('contentToPrint');
-                
-                // Cấu hình html2canvas tốt hơn
-                html2canvas(element, {
-                    scale: 2, // Tăng độ nét
-                    useCORS: true,
-                    windowWidth: element.scrollWidth,
-                    scrollY: -window.scrollY
-                }).then(canvas => {
+                html2canvas(element, { scale: 2, useCORS: true, windowWidth: element.scrollWidth, scrollY: -window.scrollY }).then(canvas => {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF({ orientation: ori, unit: 'mm', format: 'a4' });
-                    
                     const imgData = canvas.toDataURL('image/png');
-                    const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
+                    const pageWidth = doc.internal.pageSize.getWidth();
                     const pageHeight = doc.internal.pageSize.getHeight();
-                    
-                    // Tính toán tỷ lệ ảnh cho vừa trang A4
                     const imgProps = doc.getImageProperties(imgData);
                     const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
-                    
-                    let heightLeft = pdfHeight;
-                    let position = 0;
-                    
-                    // Trang 1
+                    let heightLeft = pdfHeight, position = 0;
                     doc.addImage(imgData, 'PNG', 0, position, pageWidth, pdfHeight);
                     heightLeft -= pageHeight;
-                    
-                    // Các trang sau nếu dài quá
                     while (heightLeft >= 0) {
                         position = heightLeft - pdfHeight;
                         doc.addPage();
                         doc.addImage(imgData, 'PNG', 0, position, pageWidth, pdfHeight);
                         heightLeft -= pageHeight;
                     }
-                    
                     const fileName = `BienBan_${new Date().getTime()}.pdf`;
                     doc.save(fileName);
                     savePdfToDb(doc.output('blob'), fileName);
-
-                    // Khôi phục giao diện
                     toggleInputsForExport(false);
                     document.querySelectorAll('.no-print').forEach(e => e.style.display = '');
                     modal.style.display = 'none';
@@ -456,7 +396,6 @@
             };
         }
 
-        // --- TABLE & DATA FUNCTIONS ---
         let productCount = 0;
         function addNewProductRow(data = {}) {
             productCount++;
@@ -476,19 +415,16 @@
                 <td><input type="text" name="note" value="${data['note']||''}" style="border:none;"></td>
                 <td class="no-print"><button onclick="removeRow(this)" style="background:none;border:none;color:red;font-weight:bold;cursor:pointer;">X</button></td>
             `;
-            // Set select value
             if(data['condition']) tr.querySelector('select').value = data['condition'];
             document.getElementById('productTableBody').appendChild(tr);
         }
 
         window.removeRow = function(btn) {
             btn.closest('tr').remove();
-            // Re-index
             let i=0; document.querySelectorAll('#productTableBody tr').forEach(r => r.cells[0].textContent = ++i); productCount=i;
             saveDataToFirebase();
         }
 
-        // --- FIREBASE & HELPERS ---
         function collectData() {
             const products = [];
             document.querySelectorAll('#productTableBody tr').forEach(r => {
@@ -543,4 +479,100 @@
                     document.getElementById('deliveryTransport').value = i.transport||'';
                     document.getElementById('paymentCondition').value = i.payment||'';
                     document.getElementById('otherRequirements').value = i.other||'';
-                    document.getElementById('deptStaffName').
+                    document.getElementById('deptStaffName').value = i.deptStaff||'';
+                    document.getElementById('preparerName').value = i.preparer||'';
+                    document.getElementById('warehouseStaffName').value = i.warehouseStaff||'Phạm Minh Tâm';
+                    const tb = document.getElementById('productTableBody'); tb.innerHTML = ''; productCount=0;
+                    (d.products||[]).forEach(p => addNewProductRow(p));
+                }
+            });
+        }
+        
+        function saveDataAndCreatePDF() {
+            saveDataToFirebase();
+            document.getElementById('exportPdfBtn').click();
+        }
+
+        function savePdfToDb(blob, name) {
+            if(storage && db) {
+                storage.ref(`pdfs/${name}`).put(blob).then(s => s.ref.getDownloadURL())
+                .then(url => db.collection('savedPdfs').add({ fileName: name, downloadURL: url, createdAt: firebase.firestore.FieldValue.serverTimestamp() }))
+                .then(() => showMessage('Đã lưu PDF vào hệ thống', 'success'));
+            }
+        }
+        
+        function loadSavedFiles() {
+            if(!db) return;
+            db.collection('savedPdfs').orderBy('createdAt', 'desc').limit(5).onSnapshot(s => {
+                const l = document.getElementById('filesList'); l.innerHTML = '';
+                s.forEach(d => {
+                    const dd = d.data();
+                    l.innerHTML += `<div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:5px;"><span>${dd.fileName}</span><a href="${dd.downloadURL}" target="_blank">Tải</a></div>`;
+                });
+            });
+        }
+
+        function loadSuppliers() {
+            if(db) db.collection('suppliers').get().then(q => {
+                const dl = document.getElementById('supplierList'); dl.innerHTML = '';
+                q.forEach(d => { const o = document.createElement('option'); o.value = d.data().name; dl.appendChild(o); });
+            });
+        }
+
+        function handleExcelUpload(e) {
+            const f = e.target.files[0]; if(!f) return;
+            const r = new FileReader();
+            r.onload = (evt) => {
+                try {
+                    const wb = XLSX.read(new Uint8Array(evt.target.result), {type:'array'});
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(ws, {header:1});
+                    let hIdx = -1;
+                    for(let i=0;i<json.length;i++) if(JSON.stringify(json[i]).includes('Tên')) { hIdx=i; break; }
+                    if(hIdx>-1) {
+                         document.getElementById('productTableBody').innerHTML=''; productCount=0;
+                         const headers = json[hIdx];
+                         for(let i=hIdx+1; i<json.length; i++) {
+                             const row = json[i]; if(!row || !row.length) continue;
+                             const d = {};
+                             headers.forEach((h, idx) => { if(h && row[idx]) d[h] = row[idx]; });
+                             addNewProductRow(d);
+                         }
+                    }
+                } catch(ex) { alert('Lỗi đọc file'); }
+            };
+            r.readAsArrayBuffer(f);
+        }
+        
+        function setupPasteModal() {
+            const m = document.getElementById('pasteModal');
+            document.getElementById('openPasteModalBtn').onclick = () => { m.style.display='flex'; document.getElementById('pasteInput').focus(); };
+            document.getElementById('closePasteModal').onclick = () => m.style.display='none';
+            document.getElementById('processPasteBtn').onclick = () => {
+                const raw = document.getElementById('pasteInput').value;
+                if(!raw) return;
+                const rows = raw.trim().split('\n');
+                rows.forEach(r => {
+                    const c = r.split('\t');
+                    if(c.length > 0) addNewProductRow({ productName: c[0], unit: c[1], actualQuantity: c[2] });
+                });
+                m.style.display='none';
+                saveDataToFirebase();
+            };
+        }
+        
+        document.getElementById('exportExcelBtn').onclick = () => {
+            const wb = XLSX.utils.book_new();
+            const data = [['BIÊN BẢN NHẬN HÀNG'],
+                          ['Nhà cung cấp:', document.getElementById('supplierName').value],
+                          ['STT','Tên hàng','ĐVT','Số lô','Hạn dùng','SL Thực tế','Tình trạng','Ghi chú']];
+            document.querySelectorAll('#productTableBody tr').forEach(r => {
+                const i = r.querySelectorAll('input,textarea,select');
+                data.push([r.cells[0].innerText, i[0].value, i[1].value, i[2].value, i[3].value, i[4].value, i[8].value, i[9].value]);
+            });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Sheet1');
+            XLSX.writeFile(wb, 'BienBan.xlsx');
+        };
+    </script>
+</body>
+</html>
