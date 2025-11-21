@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phiếu Nhập Kho - In Tiêu Chuẩn</title>
+    <title>Phiếu Nhập Kho - In Tiêu Chuẩn (Full Tính Năng)</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
@@ -20,14 +20,14 @@
         * { box-sizing: border-box; font-family: 'Times New Roman', Times, serif; }
         body { margin: 0; padding: 20px; background-color: #f0f2f5; color: var(--text-color); font-size: 14px; }
         
-        /* --- CONTAINER: KHUNG VIỀN CHÍNH --- */
+        /* --- CONTAINER: KHUNG VIỀN CHÍNH A4 --- */
         .container { 
-            max-width: 210mm; /* Khổ A4 */
+            max-width: 210mm; 
             margin: 0 auto; 
             background-color: white; 
-            padding: 15mm 10mm; /* Lề trong */
+            padding: 15mm 10mm; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-            border: 4px double #000; /* Viền đôi cho đẹp */
+            border: 4px double #000; 
             position: relative;
         }
         
@@ -42,7 +42,6 @@
         
         /* --- Forms --- */
         .compact-form-section { margin-bottom: 10px; }
-        
         .input-group { margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
         .form-control { flex: 1; min-width: 150px; }
         .form-control label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 2px; }
@@ -83,7 +82,7 @@
 
             .container {
                 width: 100%; max-width: none; margin: 0; padding: 5px;
-                border: 2px solid #000 !important; /* Viền đậm khi in */
+                border: 2px solid #000 !important; 
                 box-shadow: none; height: auto;
             }
 
@@ -95,8 +94,15 @@
             .form-control label::after { content: ":"; }
         }
 
+        /* --- MODAL STYLES --- */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border: 1px solid #000; width: 90%; max-width: 800px; max-height: 90vh; overflow: auto; }
+        .modal-content { background: white; padding: 20px; border: 1px solid #000; width: 90%; max-width: 1000px; max-height: 90vh; overflow: auto; border-radius: 5px; }
+        
+        /* Styles cho bảng mapping trong modal */
+        .mapping-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .mapping-table th { background-color: #eee; padding: 5px; border: 1px solid #ccc; }
+        .mapping-table td { padding: 5px; border: 1px solid #ccc; font-size: 12px; white-space: nowrap; }
+        .col-select { width: 100%; padding: 5px; border: 1px solid #000; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -108,7 +114,7 @@
             <div class="company-info">
                 <div class="company-name">CÔNG TY TNHH TM DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ IDECO</div>
                 <div class="document-title">BIÊN BẢN NHẬN HÀNG</div>
-                <div class="document-code">Mã số: BM.06</div>
+                <div class="document-code">Mã số: BMI.06</div>
             </div>
             <div style="width: 100px;"></div>
         </div>
@@ -141,7 +147,7 @@
                     <input type="text" id="receivingPlace">
                 </div>
                 <div class="form-control">
-                    <label>Ngày nhận </label>
+                    <label>Ngày nhận (dd/mm/yyyy)</label>
                     <input type="date" id="receivingDate">
                 </div>
                 <div class="form-control">
@@ -224,7 +230,7 @@
             <div style="margin-top: 5px; display: flex; gap: 10px; align-items: center;">
                 <input type="file" id="dataFile" accept=".xlsx,.xls">
                 <span>HOẶC</span>
-                <button type="button" id="openPasteModalBtn" class="btn">📋 Dán từ Excel</button>
+                <button type="button" id="openPasteModalBtn" class="btn">📋 Dán từ Excel & Soi chiếu</button>
             </div>
             <div id="uploadMessage"></div>
         </div>
@@ -239,7 +245,7 @@
             <button type="button" id="exportExcelBtn" class="btn">📊 Excel</button>
             <button type="button" id="exportPdfBtn" class="btn">📄 PDF</button>
             <button type="button" id="printBtn" class="btn">🖨️ In ngay</button>
-            <button type="button" id="resetBtn" class="btn" style="border-color: red; color: red;">🔄 Làm mới (Thêm mới)</button>
+            <button type="button" id="resetBtn" class="btn" style="border-color: red; color: red;">🔄 Làm mới</button>
         </div>
         
         <div class="saved-files-section no-print">
@@ -250,14 +256,20 @@
 
     <div id="pasteModal" class="modal no-print">
         <div class="modal-content">
-            <span class="close-modal" id="closePasteModal" style="float:right; cursor:pointer; font-size:20px;">&times;</span>
-            <h3>Dán dữ liệu từ Excel</h3>
-            <textarea id="pasteInput" style="width:100%; height:150px; border:1px solid #000;" placeholder="Paste dữ liệu vào đây..."></textarea>
-            <div id="previewContainer" style="display:none; margin-top:10px;">
-                <div style="overflow-x:auto;">
-                    <table id="mappingTable"></table>
+            <span class="close-modal" id="closePasteModal" style="float:right; cursor:pointer; font-size:24px; font-weight:bold;">&times;</span>
+            <h3 style="margin-top: 0;">Dán dữ liệu từ Excel & Soi chiếu cột</h3>
+            <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Bước 1: Copy bảng từ Excel và dán vào ô bên dưới.</p>
+            <textarea id="pasteInput" style="width:100%; height:120px; border:1px solid #000; font-family: monospace; padding: 10px;" placeholder="Dán dữ liệu vào đây (Ctrl + V)..."></textarea>
+            
+            <div id="previewContainer" style="display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px;">
+                <h4 style="margin: 5px 0;">Bước 2: Xem trước & Chọn cột tương ứng</h4>
+                <p style="font-size: 13px; color: red;">* Vui lòng chọn đúng tên cột ở dòng tiêu đề bên dưới</p>
+                <div style="overflow-x: auto; max-height: 300px;">
+                    <table class="mapping-table" id="mappingTable"></table>
                 </div>
-                <button id="processPasteBtn" class="btn" style="margin-top:10px; background:#333; color:white;">Nhập dữ liệu</button>
+                <div style="margin-top: 15px; text-align: right;">
+                    <button type="button" id="processPasteBtn" class="btn" style="background: #333; color: white; padding: 10px 20px;">📥 XÁC NHẬN NHẬP DỮ LIỆU</button>
+                </div>
             </div>
         </div>
     </div>
@@ -273,6 +285,7 @@
     </div>
 
     <script>
+        // --- CONFIG & INIT ---
         const firebaseConfig = { apiKey: "AIzaSyCM_gZ1DEOtUwB0Ii-dm-6jIpxydoJU4-E", authDomain: "dulieuthuoc-d532e.firebaseapp.com", projectId: "dulieuthuoc-d532e", storageBucket: "dulieuthuoc-d532e.firebasestorage.app", messagingSenderId: "70002622120", appId: "1:70002622120:web:9676e1616a0774bae28c9d", measurementId: "G-LQ5P054T97" };
         let db, storage;
         try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); storage = firebase.storage(); } catch (e) { console.error(e); }
@@ -285,13 +298,17 @@
         
         function formatDateForInput(d) {
             if(!d) return '';
-            if(d.includes('/')) { const p = d.split('/'); return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; }
+            // Giữ nguyên nếu là dd/mm/yyyy để hiển thị (logic mapping sẽ xử lý sau) hoặc format chuẩn yyyy-mm-dd cho input date
+            if(d.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) { 
+                const p = d.split('/'); return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; 
+            }
             return d;
         }
 
         function toggleInputsForExport(isExporting) {
             const statusEl = document.getElementById('connectionStatus');
             if(statusEl) statusEl.style.display = isExporting ? 'none' : (db ? 'flex' : 'none');
+            
             document.querySelectorAll('.print-substitution').forEach(e => e.remove());
             document.querySelectorAll('textarea, input, select').forEach(el => {
                 if(['button','file','radio','checkbox','hidden'].includes(el.type)) return;
@@ -321,42 +338,165 @@
 
             document.getElementById('addProductBtn').onclick = () => addNewProductRow();
             document.getElementById('saveBtn').onclick = saveDataAndCreatePDF;
-            // Nút Reset đã được gắn sự kiện
             document.getElementById('resetBtn').onclick = resetForm;
             document.getElementById('printBtn').onclick = () => window.print();
             
             const cs = document.getElementById('connectionStatus');
             if(db) db.enableNetwork().then(() => { cs.style.display = 'flex'; cs.innerHTML = '<span class="status-indicator" style="background:black"></span> Kết nối OK'; }).catch(() => { cs.innerHTML = 'Lỗi mạng'; });
             
+            // SETUP PASTE MODAL FULL TÍNH NĂNG
             setupPasteModal();
+            
             document.getElementById('dataFile').onchange = handleExcelUpload;
             setupPdfExport();
             document.querySelectorAll('input, select, textarea').forEach(e => e.addEventListener('change', saveDataToFirebase));
         });
 
-        // --- HÀM RESET FORM MỚI ĐƯỢC THÊM VÀO ---
+        // --- LOGIC PASTE & MAPPING (Đã sửa lại) ---
+        function setupPasteModal() {
+            const modal = document.getElementById('pasteModal');
+            const pasteInput = document.getElementById('pasteInput');
+            const previewContainer = document.getElementById('previewContainer');
+            const mappingTable = document.getElementById('mappingTable');
+            let parsedData = [];
+
+            // Mở Modal
+            document.getElementById('openPasteModalBtn').onclick = () => { 
+                modal.style.display = 'flex'; 
+                pasteInput.value = ''; 
+                previewContainer.style.display = 'none'; 
+                pasteInput.focus(); 
+            };
+            
+            // Đóng Modal
+            document.getElementById('closePasteModal').onclick = () => { modal.style.display = 'none'; };
+            window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
+
+            // Khi dán text vào
+            pasteInput.addEventListener('input', function() {
+                const text = this.value.trim();
+                if (!text) { previewContainer.style.display = 'none'; return; }
+                
+                // Parse Text (Tách dòng và tab)
+                const rows = text.split(/\n/);
+                parsedData = rows.map(row => row.split(/\t/));
+                
+                if (parsedData.length > 0) {
+                    renderPreview(parsedData);
+                    previewContainer.style.display = 'block';
+                }
+            });
+
+            // Vẽ bảng xem trước với Dropdown chọn cột
+            function renderPreview(data) {
+                mappingTable.innerHTML = '';
+                if (data.length === 0) return;
+
+                const colCount = data[0].length;
+                const thead = document.createElement('tr');
+                
+                // Các tùy chọn mapping
+                const options = [
+                    {v:'skip',t:'-- Bỏ qua --'},
+                    {v:'productName',t:'Tên hàng hóa'},
+                    {v:'unit',t:'Đơn vị tính'},
+                    {v:'lotNumber',t:'Số Lô'},
+                    {v:'expiryDate',t:'Hạn Dùng'},
+                    {v:'actualQuantity',t:'Số lượng thực tế'},
+                    {v:'note',t:'Ghi chú'}
+                ];
+
+                // Tạo hàng Header chứa Dropdown
+                for (let i = 0; i < colCount; i++) {
+                    const th = document.createElement('th');
+                    const select = document.createElement('select');
+                    select.className = 'col-select';
+                    select.dataset.colIndex = i;
+                    
+                    options.forEach(opt => { 
+                        const option = document.createElement('option'); 
+                        option.value = opt.v; 
+                        option.text = opt.t; 
+                        select.appendChild(option); 
+                    });
+                    
+                    // Tự động gợi ý (Basic AI logic)
+                    const firstVal = data[0][i] ? data[0][i].toLowerCase() : '';
+                    if(firstVal.includes('tên')) select.value = 'productName';
+                    else if(firstVal.includes('đvt') || firstVal.includes('đơn vị')) select.value = 'unit';
+                    else if(firstVal.includes('lô')) select.value = 'lotNumber';
+                    else if(firstVal.includes('hạn')) select.value = 'expiryDate';
+                    else if(firstVal.includes('lượng')) select.value = 'actualQuantity';
+                    else select.value = 'skip';
+
+                    th.appendChild(select);
+                    thead.appendChild(th);
+                }
+                mappingTable.appendChild(thead);
+
+                // Hiển thị tối đa 5 dòng dữ liệu mẫu
+                for (let i = 0; i < Math.min(data.length, 5); i++) {
+                    const tr = document.createElement('tr');
+                    data[i].forEach(cell => { 
+                        const td = document.createElement('td'); 
+                        td.textContent = cell; 
+                        tr.appendChild(td); 
+                    });
+                    mappingTable.appendChild(tr);
+                }
+            }
+
+            // Xử lý khi bấm nút "Xác nhận nhập dữ liệu"
+            document.getElementById('processPasteBtn').addEventListener('click', function() {
+                const selects = document.querySelectorAll('.col-select');
+                const mappings = [];
+                
+                selects.forEach(sel => { 
+                    if (sel.value !== 'skip') mappings.push({ index: parseInt(sel.dataset.colIndex), field: sel.value }); 
+                });
+
+                if (mappings.length === 0) { alert('Vui lòng chọn ít nhất một cột dữ liệu (VD: Tên hàng)!'); return; }
+
+                let importedCount = 0;
+                parsedData.forEach(row => {
+                    if (row.length === 0 || (row.length === 1 && row[0].trim() === '')) return; // Bỏ dòng trống
+                    
+                    const productData = {};
+                    let hasData = false;
+
+                    mappings.forEach(map => { 
+                        if (row[map.index] !== undefined) {
+                            productData[map.field] = row[map.index].trim(); 
+                            if(productData[map.field]) hasData = true;
+                        }
+                    });
+
+                    // Chỉ thêm nếu dòng đó có dữ liệu
+                    if (hasData) { 
+                        addNewProductRow(productData); 
+                        importedCount++; 
+                    }
+                });
+
+                showMessage(`Đã nhập thành công ${importedCount} dòng!`, 'success');
+                saveDataToFirebase();
+                modal.style.display = 'none';
+            });
+        }
+
+        // --- CÁC HÀM KHÁC (Reset, PDF, Excel...) ---
         function resetForm() {
             if(!confirm('Bạn có chắc muốn xóa hết dữ liệu và tạo phiếu mới?')) return;
-            
-            // Xóa dữ liệu trong các ô input (trừ các ô hệ thống)
             document.querySelectorAll('input, textarea').forEach(el => {
                 if(el.type !== 'button' && el.type !== 'file' && el.type !== 'radio') el.value = '';
             });
-            
-            // Reset bảng sản phẩm
             document.getElementById('productTableBody').innerHTML = '';
             productCount = 0;
-            
-            // Đặt lại ngày giờ hiện tại
             const now = new Date();
             document.getElementById('receivingDate').valueAsDate = now;
             document.getElementById('receivingTime').value = now.toTimeString().slice(0,5);
-            
-            // Đặt lại tên mặc định
             document.getElementById('warehouseStaffName').value = 'Phạm Minh Tâm';
             document.getElementById('receivingPlace').value = '003 Carlion 5 262/3 Lũy Bán Bích - Phường Tân Phú -Tp. Hồ Chí Minh';
-
-            // Lưu trạng thái trống lên Firebase
             saveDataToFirebase();
         }
 
@@ -542,23 +682,6 @@
                 } catch(ex) { alert('Lỗi đọc file'); }
             };
             r.readAsArrayBuffer(f);
-        }
-        
-        function setupPasteModal() {
-            const m = document.getElementById('pasteModal');
-            document.getElementById('openPasteModalBtn').onclick = () => { m.style.display='flex'; document.getElementById('pasteInput').focus(); };
-            document.getElementById('closePasteModal').onclick = () => m.style.display='none';
-            document.getElementById('processPasteBtn').onclick = () => {
-                const raw = document.getElementById('pasteInput').value;
-                if(!raw) return;
-                const rows = raw.trim().split('\n');
-                rows.forEach(r => {
-                    const c = r.split('\t');
-                    if(c.length > 0) addNewProductRow({ productName: c[0], unit: c[1], actualQuantity: c[2] });
-                });
-                m.style.display='none';
-                saveDataToFirebase();
-            };
         }
         
         document.getElementById('exportExcelBtn').onclick = () => {
