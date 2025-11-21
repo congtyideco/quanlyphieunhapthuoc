@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý SOP - Đã sửa lỗi trùng lặp</title>
+    <title>Quản lý SOP - In Đen Trắng</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
@@ -12,26 +12,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
-            --primary-color: #2c5aa0;
-            --secondary-color: #e74c3c;
-            --accent-color: #27ae60;
-            --light-bg: #f8f9fa;
-            --border-color: #dee2e6;
-            --text-color: #333;
+            /* CHUYỂN TOÀN BỘ MÀU SANG TÔNG ĐEN/XÁM CHO IN ẤN RÕ NÉT */
+            --primary-color: #000000;
+            --secondary-color: #000000;
+            --accent-color: #333333;
+            --light-bg: #ffffff;
+            --border-color: #000000;
+            --text-color: #000000;
         }
         
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; padding: 15px; background-color: #f0f2f5; color: var(--text-color); font-size: 14px; }
-        .container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 1px solid #000; }
         
         /* --- Header & Logo --- */
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; }
         .logo-container { width: 120px; height: 80px; display: flex; align-items: center; justify-content: center; }
-        .logo { max-width: 100%; max-height: 100%; }
+        .logo { max-width: 100%; max-height: 100%; filter: grayscale(100%); /* Chuyển logo sang đen trắng */ }
         .company-info { flex-grow: 1; text-align: center; padding: 0 15px; }
         .company-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; color: var(--primary-color); }
         .document-title { font-size: 20px; font-weight: bold; margin: 8px 0; color: var(--secondary-color); text-transform: uppercase; }
-        .document-code { font-size: 14px; margin-bottom: 5px; color: #6c757d; }
+        .document-code { font-size: 14px; margin-bottom: 5px; color: #000; font-style: italic; }
         
         /* --- Forms --- */
         .compact-form-section { margin-bottom: 20px; padding: 15px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--light-bg); }
@@ -39,37 +40,38 @@
         .form-group { flex: 1; min-width: 180px; }
         .compact-form-group { flex: 1; min-width: 150px; }
         label { display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color); font-size: 13px; }
-        input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; transition: all 0.2s; }
+        input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; transition: all 0.2s; color: #000; }
         
         textarea.auto-resize { width: 100%; resize: none; overflow: hidden; min-height: 34px; padding: 8px 10px; line-height: 1.4; background-color: white; }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.1); }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1); }
 
         /* --- Table --- */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); table-layout: fixed; }
-        th, td { border: 1px solid var(--border-color); padding: 8px; text-align: center; word-wrap: break-word; }
-        th { background-color: var(--primary-color); color: white; font-weight: 600; font-size: 12px; position: relative; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; border: 1px solid #000; table-layout: fixed; }
+        th, td { border: 1px solid var(--border-color); padding: 8px; text-align: center; word-wrap: break-word; color: #000; }
+        th { background-color: #e0e0e0; color: #000; font-weight: 700; font-size: 12px; position: relative; border-bottom: 2px solid #000; }
         
         .resizer { position: absolute; top: 0; right: 0; width: 5px; cursor: col-resize; user-select: none; height: 100%; z-index: 10; }
         .resizer:hover, .resizing { background-color: var(--secondary-color); opacity: 0.7; }
-        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:nth-child(even) { background-color: #fff; } /* Bỏ màu nền xen kẽ để in rõ hơn */
 
-        /* --- Buttons --- */
+        /* --- Buttons (Giữ màu nhẹ để dễ thao tác trên màn hình, nhưng in ra sẽ ẩn) --- */
         .action-buttons { margin-top: 20px; display: flex; justify-content: space-between; }
         .utility-buttons { margin-top: 10px; display: flex; justify-content: flex-start; gap: 8px; }
-        button { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s ease; display: flex; align-items: center; gap: 5px; }
-        button:hover { transform: translateY(-1px); box-shadow: 0 3px 5px rgba(0,0,0,0.1); }
+        button { padding: 8px 15px; border: 1px solid #000; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s ease; display: flex; align-items: center; gap: 5px; background-color: #fff; color: #000; }
+        button:hover { background-color: #000; color: #fff; }
         
-        .btn-primary { background-color: var(--accent-color); color: white; }
-        .btn-secondary { background-color: var(--primary-color); color: white; }
-        .btn-danger { background-color: #e74c3c; color: white; }
-        .btn-warning { background-color: #f39c12; color: white; }
-        .btn-info { background-color: #3498db; color: white; }
-        .btn-purple { background-color: #9b59b6; color: white; }
-        .btn-teal { background-color: #009688; color: white; }
+        /* Các class nút bấm vẫn giữ style riêng nhưng tông màu tối giản */
+        .btn-primary { background-color: #333; color: white; }
+        .btn-secondary { background-color: #555; color: white; }
+        .btn-danger { background-color: #333; color: white; border: 1px solid #000; }
+        .btn-warning { background-color: #fff; color: #000; border: 1px solid #000; }
+        .btn-info { background-color: #fff; color: #000; border: 1px solid #000; }
+        .btn-purple { background-color: #fff; color: #000; border: 1px solid #000; }
+        .btn-teal { background-color: #fff; color: #000; border: 1px solid #000; }
 
         /* --- Upload & Info Sections --- */
-        .upload-section { margin-top: 20px; padding: 15px; border: 2px dashed #bdc3c7; border-radius: 6px; background-color: #f8f9fa; }
-        .receiving-info { margin-top: 15px; padding: 12px; background-color: #ecf0f1; border-radius: 5px; }
+        .upload-section { margin-top: 20px; padding: 15px; border: 2px dashed #000; border-radius: 6px; background-color: #fff; }
+        .receiving-info { margin-top: 15px; padding: 12px; background-color: #fff; border: 1px solid #000; border-radius: 5px; }
         .receiving-info-row { display: flex; margin-bottom: 8px; align-items: center; }
         .receiving-info-label { min-width: 180px; font-weight: 600; color: var(--primary-color); font-size: 13px; }
         .receiving-info-input { flex-grow: 1; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; background-color: white; }
@@ -77,22 +79,22 @@
         /* --- Signature --- */
         .signature-section { margin-top: 20px; display: flex; justify-content: space-between; gap: 10px; }
         .signature-box { text-align: center; width: 30%; }
-        .signature-line { border-top: 1px solid var(--text-color); margin-top: 40px; padding-top: 5px; font-weight: 600; font-size: 13px; text-transform: uppercase; }
+        .signature-line { border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-weight: 600; font-size: 13px; text-transform: uppercase; color: #000; }
         
         /* --- Others --- */
         .saved-files-section { margin-top: 20px; padding: 15px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--light-bg); }
         .files-list { max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; background-color: white; }
         .file-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--border-color); }
-        .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
-        .status-online { background-color: var(--accent-color); }
-        .status-offline { background-color: #e74c3c; }
-        .alert { padding: 10px; border-radius: 4px; margin: 8px 0; font-size: 13px; }
-        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; border: 1px solid #000; }
+        .status-online { background-color: #000; }
+        .status-offline { background-color: #fff; }
+        .alert { padding: 10px; border-radius: 4px; margin: 8px 0; font-size: 13px; border: 1px solid #000; }
+        .alert-success { background-color: #fff; color: #000; }
+        .alert-error { background-color: #fff; color: #000; font-weight: bold; }
         .compact-table { font-size: 12px; }
-        .compact-table th, .compact-table td { padding: 6px 4px; vertical-align: middle; }
+        .compact-table th, .compact-table td { padding: 6px 4px; vertical-align: middle; border-color: #000; }
         .no-print { display: block; }
-        .section-title { font-size: 16px; font-weight: 600; color: var(--primary-color); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+        .section-title { font-size: 16px; font-weight: 600; color: #000; margin-bottom: 10px; border-bottom: 1px solid #000; }
 
         /* --- PRINT FIX --- */
         .print-substitution {
@@ -105,31 +107,37 @@
             white-space: pre-wrap;
             word-break: break-word;
             min-height: 34px;
+            color: #000;
+            font-weight: 500;
         }
 
         @media print {
             .no-print, .no-print * { display: none !important; }
-            body { padding: 0; background-color: white; }
+            body { padding: 0; background-color: white; color: #000 !important; }
             .container { box-shadow: none; padding: 10px; max-width: 100%; border: none; }
-            table { font-size: 12px; }
+            table { font-size: 12px; border: 1px solid #000 !important; }
+            th, td { border: 1px solid #000 !important; color: #000 !important; }
             textarea, input[type="text"], input[type="date"], input[type="time"], input[type="number"] {
                 border: none !important;
                 background: transparent !important;
                 padding: 0 !important;
+                color: #000 !important;
             }
+            .section-title { border-bottom: 1px solid #000; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
 
         /* --- MODAL --- */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-        .modal-content { background-color: #fefefe; padding: 20px; border-radius: 8px; width: 90%; max-width: 1000px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        .close-modal { float: right; font-size: 24px; font-weight: bold; cursor: pointer; color: #aaa; }
-        .close-modal:hover { color: black; }
-        .paste-area { width: 100%; height: 150px; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-family: monospace; }
-        .mapping-container { overflow-x: auto; margin-top: 15px; border: 1px solid #eee; }
+        .modal-content { background-color: #fefefe; padding: 20px; border-radius: 8px; width: 90%; max-width: 1000px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border: 1px solid #000; }
+        .close-modal { float: right; font-size: 24px; font-weight: bold; cursor: pointer; color: #000; }
+        .close-modal:hover { color: #555; }
+        .paste-area { width: 100%; height: 150px; border: 1px solid #000; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-family: monospace; }
+        .mapping-container { overflow-x: auto; margin-top: 15px; border: 1px solid #000; }
         .mapping-table { width: 100%; border-collapse: collapse; }
-        .mapping-table th { background-color: #f0f2f5; color: #333; padding: 5px; border: 1px solid #ddd; }
-        .mapping-table td { padding: 5px; border: 1px solid #ddd; font-size: 12px; white-space: nowrap; }
-        .col-select { width: 100%; padding: 5px; border: 1px solid var(--accent-color); border-radius: 4px; font-weight: bold; color: var(--primary-color); }
+        .mapping-table th { background-color: #eee; color: #000; padding: 5px; border: 1px solid #000; }
+        .mapping-table td { padding: 5px; border: 1px solid #000; font-size: 12px; white-space: nowrap; }
+        .col-select { width: 100%; padding: 5px; border: 1px solid #000; border-radius: 4px; font-weight: bold; color: #000; }
     </style>
 </head>
 <body>
@@ -174,7 +182,7 @@
                     <input type="text" id="receivingPlace">
                 </div>
                 <div class="compact-form-group">
-                    <label for="receivingDate">Ngày nhận</label>
+                    <label for="receivingDate">Ngày nhận (dd/mm/yyyy)</label>
                     <input type="date" id="receivingDate">
                 </div>
                 <div class="compact-form-group">
@@ -223,15 +231,15 @@
         <div class="signature-section">
             <div class="signature-box">
                 <div class="signature-line">Bộ Phận Kho/Kế toán</div>
-                <input type="text" id="deptStaffName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none;">
+                <input type="text" id="deptStaffName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #000; background: transparent; outline: none; color: #000;">
             </div>
             <div class="signature-box">
                 <div class="signature-line">Người lập biên bản</div>
-                <input type="text" id="preparerName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none;">
+                <input type="text" id="preparerName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #000; background: transparent; outline: none; color: #000;">
             </div>
             <div class="signature-box">
                 <div class="signature-line">Phụ trách chuyên môn</div>
-                <input type="text" id="warehouseStaffName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none;">
+                <input type="text" id="warehouseStaffName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #000; background: transparent; outline: none; color: #000;">
             </div>
         </div>
 
@@ -337,6 +345,14 @@
                     
                     if (el.tagName === 'SELECT') {
                         div.textContent = el.options[el.selectedIndex]?.text || '';
+                    } else if (el.type === 'date' && el.value) {
+                        // CHUYỂN ĐỔI NGÀY SANG dd/mm/yyyy KHI IN
+                        const parts = el.value.split('-');
+                        if(parts.length === 3) {
+                            div.textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        } else {
+                            div.textContent = el.value;
+                        }
                     } else {
                         div.textContent = el.value;
                     }
@@ -393,6 +409,7 @@
             if (db) db.enableNetwork().then(() => { cs.style.display = 'block'; cs.className = 'alert alert-success'; cs.innerHTML = '<span class="status-indicator status-online"></span> Kết nối OK'; }).catch(e => { cs.style.display = 'block'; cs.className = 'alert alert-error'; cs.innerHTML = 'Lỗi mạng'; });
 
             const now = new Date();
+            // Thiết lập giá trị cho input date (luôn phải là YYYY-MM-DD để input hiểu)
             document.getElementById('receivingDate').valueAsDate = now;
             document.getElementById('receivingTime').value = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
 
@@ -510,7 +527,7 @@
             document.getElementById('confirmExportPdf').onclick = () => {
                 const ori = document.querySelector('input[name="pageOrientation"]:checked').value;
                 document.querySelectorAll('.no-print').forEach(e => e.style.display = 'none');
-                toggleInputsForExport(true); // Bật chế độ in (ẩn input, hiện text)
+                toggleInputsForExport(true); // Bật chế độ in (ẩn input, hiện text, format ngày)
 
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ orientation: ori, unit: 'mm', format: 'a4' });
@@ -542,6 +559,7 @@
             productCount++;
             const tr = document.createElement('tr');
             const name = data['Tên Hàng Hóa'] || data['Tên hàng'] || data['productName'] || '';
+            // Sửa lỗi chính tả Nguyên vẹn ở đây
             tr.innerHTML = `
                 <td>${productCount}</td>
                 <td><textarea name="productName" class="auto-resize" rows="1" oninput="autoResize(this)">${name}</textarea></td>
@@ -552,7 +570,7 @@
                 <td><input type="number" name="excessQuantity" min="0" value="${data['excessQuantity']||0}"></td>
                 <td><input type="number" name="shortageQuantity" min="0" value="${data['shortageQuantity']||0}"></td>
                 <td><input type="number" name="damagedQuantity" min="0" value="${data['damagedQuantity']||0}"></td>
-                <td><select name="packageCondition"><option value="Nguyên ven">Nguyên ven</option><option value="Hư hỏng nhẹ">Hư hỏng nhẹ</option><option value="Hư hỏng nặng">Hư hỏng nặng</option></select></td>
+                <td><select name="packageCondition"><option value="Nguyên vẹn">Nguyên vẹn</option><option value="Hư hỏng nhẹ">Hư hỏng nhẹ</option><option value="Hư hỏng nặng">Hư hỏng nặng</option></select></td>
                 <td><input type="text" name="note" value="${data['note']||''}"></td>
                 <td class="no-print"><button type="button" class="btn-danger remove-product" style="padding: 4px;">Xóa</button></td>
             `;
@@ -635,7 +653,6 @@
                     document.getElementById('otherRequirements').value = info.otherRequirements||'';
                     document.getElementById('preparerName').value = info.preparerName||'';
                     
-                    // Cập nhật tên mặc định là Phạm Minh Tâm (nếu chưa có dữ liệu)
                     document.getElementById('warehouseStaffName').value = info.warehouseStaffName || 'Phạm Minh Tâm';
                     document.getElementById('deptStaffName').value = info.deptStaffName||'';
 
