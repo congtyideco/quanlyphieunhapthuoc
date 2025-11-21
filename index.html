@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phiếu Nhập Kho - In Tiêu Chuẩn (Full Tính Năng)</title>
+    <title>Quản lý SOP - Fix Lỗi PDF & In</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
@@ -12,275 +12,298 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
-            --primary-color: #000;
-            --border-color: #000;
-            --text-color: #000;
+            --primary-color: #2c5aa0;
+            --secondary-color: #e74c3c;
+            --accent-color: #27ae60;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            /* THAY ĐỔI 1: Đổi màu chữ mặc định sang ĐEN TUYỆT ĐỐI */
+            --text-color: #000000; 
         }
         
-        * { box-sizing: border-box; font-family: 'Times New Roman', Times, serif; }
-        body { margin: 0; padding: 20px; background-color: #f0f2f5; color: var(--text-color); font-size: 14px; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding: 15px; background-color: #f0f2f5; color: var(--text-color); font-size: 14px; }
+        .container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         
-        /* --- CONTAINER: KHUNG VIỀN CHÍNH A4 --- */
-        .container { 
-            max-width: 210mm; 
-            margin: 0 auto; 
-            background-color: white; 
-            padding: 15mm 10mm; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-            border: 4px double #000; 
-            position: relative;
-        }
-        
-        /* --- Header --- */
-        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        .logo-container { width: 100px; height: 70px; display: flex; align-items: center; justify-content: center; }
-        .logo { max-width: 100%; max-height: 100%; filter: grayscale(100%); }
-        .company-info { flex-grow: 1; text-align: center; padding: 0 10px; }
-        .company-name { font-size: 16px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
-        .document-title { font-size: 22px; font-weight: bold; margin: 5px 0; text-transform: uppercase; }
-        .document-code { font-size: 13px; font-style: italic; }
+        /* --- Header & Logo --- */
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; }
+        .logo-container { width: 120px; height: 80px; display: flex; align-items: center; justify-content: center; }
+        .logo { max-width: 100%; max-height: 100%; }
+        .company-info { flex-grow: 1; text-align: center; padding: 0 15px; }
+        .company-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; color: var(--primary-color); }
+        .document-title { font-size: 20px; font-weight: bold; margin: 8px 0; color: var(--secondary-color); text-transform: uppercase; }
+        .document-code { font-size: 14px; margin-bottom: 5px; color: #000; } /* Đảm bảo mã đen */
         
         /* --- Forms --- */
-        .compact-form-section { margin-bottom: 10px; }
-        .input-group { margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .form-control { flex: 1; min-width: 150px; }
-        .form-control label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 2px; }
-        .form-control input, .form-control select, .form-control textarea { 
-            width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; 
-        }
-        textarea { resize: none; overflow: hidden; }
+        .compact-form-section { margin-bottom: 20px; padding: 15px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--light-bg); }
+        .form-row { display: flex; flex-wrap: wrap; margin-bottom: 10px; gap: 10px; }
+        .form-group { flex: 1; min-width: 180px; }
+        .compact-form-group { flex: 1; min-width: 150px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary-color); font-size: 13px; }
+        
+        /* THAY ĐỔI 2: Input force màu đen */
+        input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; transition: all 0.2s; color: #000; }
+        
+        textarea.auto-resize { width: 100%; resize: none; overflow: hidden; min-height: 34px; padding: 8px 10px; line-height: 1.4; background-color: white; color: #000; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.1); }
 
         /* --- Table --- */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; table-layout: fixed; }
-        th, td { border: 1px solid #000; padding: 5px; text-align: center; vertical-align: middle; word-wrap: break-word; color: #000; }
-        th { background-color: #f0f0f0; font-weight: bold; height: 30px; }
-        th:first-child { width: 35px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); table-layout: fixed; }
+        th, td { border: 1px solid var(--border-color); padding: 8px; text-align: center; word-wrap: break-word; color: #000; }
+        th { background-color: var(--primary-color); color: white; font-weight: 600; font-size: 12px; position: relative; }
+        
+        .resizer { position: absolute; top: 0; right: 0; width: 5px; cursor: col-resize; user-select: none; height: 100%; z-index: 10; }
+        .resizer:hover, .resizing { background-color: var(--secondary-color); opacity: 0.7; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+
+        /* --- Buttons --- */
+        .action-buttons { margin-top: 20px; display: flex; justify-content: space-between; }
+        .utility-buttons { margin-top: 10px; display: flex; justify-content: flex-start; gap: 8px; }
+        button { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s ease; display: flex; align-items: center; gap: 5px; }
+        button:hover { transform: translateY(-1px); box-shadow: 0 3px 5px rgba(0,0,0,0.1); }
+        
+        .btn-primary { background-color: var(--accent-color); color: white; }
+        .btn-secondary { background-color: var(--primary-color); color: white; }
+        .btn-danger { background-color: #e74c3c; color: white; }
+        .btn-warning { background-color: #f39c12; color: white; }
+        .btn-info { background-color: #3498db; color: white; }
+        .btn-purple { background-color: #9b59b6; color: white; }
+        .btn-teal { background-color: #009688; color: white; }
+
+        /* --- Upload & Info Sections --- */
+        .upload-section { margin-top: 20px; padding: 15px; border: 2px dashed #bdc3c7; border-radius: 6px; background-color: #f8f9fa; }
+        .receiving-info { margin-top: 15px; padding: 12px; background-color: #ecf0f1; border-radius: 5px; }
+        .receiving-info-row { display: flex; margin-bottom: 8px; align-items: center; }
+        .receiving-info-label { min-width: 180px; font-weight: 600; color: var(--primary-color); font-size: 13px; }
+        .receiving-info-input { flex-grow: 1; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; background-color: white; color: #000; }
         
         /* --- Signature --- */
-        .signature-section { margin-top: 30px; display: flex; justify-content: space-between; page-break-inside: avoid; }
-        .signature-box { text-align: center; width: 32%; }
-        .signature-title { font-weight: bold; text-transform: uppercase; font-size: 12px; margin-bottom: 50px; }
-        .signature-name { border: none; border-bottom: 1px dotted #000; width: 80%; text-align: center; font-weight: bold; outline: none; background: transparent; }
+        .signature-section { margin-top: 20px; display: flex; justify-content: space-between; gap: 10px; }
+        .signature-box { text-align: center; width: 30%; }
+        .signature-line { border-top: 1px solid var(--text-color); margin-top: 40px; padding-top: 5px; font-weight: 600; font-size: 13px; text-transform: uppercase; }
+        
+        /* --- Others --- */
+        .saved-files-section { margin-top: 20px; padding: 15px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--light-bg); }
+        .files-list { max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; background-color: white; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--border-color); }
+        .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+        .status-online { background-color: var(--accent-color); }
+        .status-offline { background-color: #e74c3c; }
+        .alert { padding: 10px; border-radius: 4px; margin: 8px 0; font-size: 13px; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .compact-table { font-size: 12px; }
+        .compact-table th, .compact-table td { padding: 6px 4px; vertical-align: middle; }
+        .no-print { display: block; }
+        .section-title { font-size: 16px; font-weight: 600; color: var(--primary-color); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); }
 
-        /* --- Utility & Alerts --- */
-        .alert { padding: 10px; margin: 10px 0; border: 1px solid #000; font-size: 13px; display: flex; align-items: center; gap: 10px; }
-        .status-indicator { width: 10px; height: 10px; border-radius: 50%; background-color: #000; }
-        
-        .upload-section, .action-buttons, .saved-files-section, .utility-buttons { 
-            margin-top: 15px; padding: 10px; border: 1px dashed #999; background: #fafafa; 
+        /* --- CLASS CHUYỂN ĐỔI ĐỂ IN/XUẤT PDF --- */
+        .print-substitution {
+            display: block;
+            width: 100%;
+            font-family: inherit;
+            font-size: 13px;
+            padding: 8px 10px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 34px;
+            color: #000 !important; /* Đảm bảo màu đen khi in */
         }
-        .btn { padding: 6px 12px; cursor: pointer; background: #fff; border: 1px solid #000; color: #000; font-weight: bold; border-radius: 3px; margin-right: 5px; }
-        .btn:hover { background: #000; color: #fff; }
-        
-        /* --- PRINT STYLE --- */
-        .print-substitution { display: block; font-weight: 500; border-bottom: 1px dotted #000; padding: 2px; min-height: 20px; }
-        
+
         @media print {
-            @page { size: A4; margin: 10mm; } 
-            body { padding: 0; background: white; }
-            .no-print, .upload-section, .action-buttons, .utility-buttons, .saved-files-section, #connectionStatus { display: none !important; }
-
-            .container {
-                width: 100%; max-width: none; margin: 0; padding: 5px;
-                border: 2px solid #000 !important; 
-                box-shadow: none; height: auto;
+            .no-print, .no-print * { display: none !important; }
+            /* THAY ĐỔI 3: Ẩn trạng thái kết nối khi in */
+            #connectionStatus { display: none !important; }
+            
+            body { padding: 0; background-color: white; color: #000; }
+            .container { box-shadow: none; padding: 10px; max-width: 100%; border: none; }
+            table { font-size: 12px; }
+            textarea, input[type="text"], input[type="date"], input[type="time"], input[type="number"] {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                color: #000 !important;
             }
-
-            table { border: 1px solid #000; page-break-inside: auto; }
-            tr { page-break-inside: avoid; }
-            input, textarea, select { display: none !important; }
-            .form-control { border: none; margin-bottom: 5px; }
-            .form-control label { display: inline-block; width: auto; margin-right: 5px; }
-            .form-control label::after { content: ":"; }
         }
 
-        /* --- MODAL STYLES --- */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border: 1px solid #000; width: 90%; max-width: 1000px; max-height: 90vh; overflow: auto; border-radius: 5px; }
-        
-        /* Styles cho bảng mapping trong modal */
-        .mapping-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .mapping-table th { background-color: #eee; padding: 5px; border: 1px solid #ccc; }
-        .mapping-table td { padding: 5px; border: 1px solid #ccc; font-size: 12px; white-space: nowrap; }
-        .col-select { width: 100%; padding: 5px; border: 1px solid #000; font-weight: bold; }
+        /* --- MODAL --- */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background-color: #fefefe; padding: 20px; border-radius: 8px; width: 90%; max-width: 1000px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .close-modal { float: right; font-size: 24px; font-weight: bold; cursor: pointer; color: #aaa; }
+        .close-modal:hover { color: black; }
+        .paste-area { width: 100%; height: 150px; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-family: monospace; color: #000; }
+        .mapping-container { overflow-x: auto; margin-top: 15px; border: 1px solid #eee; }
+        .mapping-table { width: 100%; border-collapse: collapse; }
+        .mapping-table th { background-color: #f0f2f5; color: #333; padding: 5px; border: 1px solid #ddd; }
+        .mapping-table td { padding: 5px; border: 1px solid #ddd; font-size: 12px; white-space: nowrap; color: #000; }
+        .col-select { width: 100%; padding: 5px; border: 1px solid var(--accent-color); border-radius: 4px; font-weight: bold; color: var(--primary-color); }
     </style>
 </head>
 <body>
     <div class="container" id="contentToPrint">
         <div class="header">
             <div class="logo-container">
-                <img src="https://cdn.imgpile.com/f/ZMtwhK9_xl.png" alt="Logo" class="logo">
+                <img src="https://cdn.imgpile.com/f/ZMtwhK9_xl.png" alt="Logo công ty" class="logo">
             </div>
             <div class="company-info">
                 <div class="company-name">CÔNG TY TNHH TM DV KẾT GIAO PHÁT TRIỂN QUỐC TẾ IDECO</div>
                 <div class="document-title">BIÊN BẢN NHẬN HÀNG</div>
-                <div class="document-code">Mã số: BMI.06</div>
+                <div class="document-code">BM.06</div>
             </div>
-            <div style="width: 100px;"></div>
+            <div class="logo-container" style="visibility: hidden;"></div>
         </div>
 
         <div id="connectionStatus" class="alert" style="display: none;">
-            <span class="status-indicator"></span>
+            <span class="status-indicator status-offline"></span>
             <span id="statusText">Đang kết nối...</span>
         </div>
 
         <div class="compact-form-section">
-            <div class="input-group">
-                <div class="form-control" style="flex: 2;">
-                    <label>Tên nhà cung cấp</label>
-                    <input type="text" id="supplierName" list="supplierList" placeholder="Nhập tên NCC...">
+            <div class="section-title">Thông tin nhận hàng</div>
+            <div class="form-row">
+                <div class="compact-form-group">
+                    <label for="supplierName">Tên nhà cung cấp</label>
+                    <input type="text" id="supplierName" list="supplierList" placeholder="Nhập hoặc chọn nhà cung cấp..." autocomplete="off">
                     <datalist id="supplierList"></datalist>
                 </div>
-                <div class="form-control">
-                    <label>Số Hóa đơn</label>
+                <div class="compact-form-group">
+                    <label for="invoiceNumber">Hóa đơn</label>
                     <input type="text" id="invoiceNumber">
                 </div>
-                <div class="form-control">
-                    <label>Số Hợp đồng</label>
+                <div class="compact-form-group">
+                    <label for="contractNumber">Số hợp đồng</label>
                     <input type="text" id="contractNumber">
                 </div>
             </div>
-            
-            <div class="input-group">
-                <div class="form-control" style="flex: 2;">
-                    <label>Nơi nhận hàng</label>
-                    <input type="text" id="receivingPlace">
+            <div class="form-row">
+                <div class="compact-form-group">
+                    <label for="receivingPlace">Nơi nhận hàng</label>
+                    <input type="text" id="receivingPlace" value="003 Carlion 5 262/3 Lũy Bán Bích - Phường Tân Phú -Tp. Hồ Chí Minh">
                 </div>
-                <div class="form-control">
-                    <label>Ngày nhận (dd/mm/yyyy)</label>
+                <div class="compact-form-group">
+                    <label for="receivingDate">Ngày nhận</label>
                     <input type="date" id="receivingDate">
                 </div>
-                <div class="form-control">
-                    <label>Giờ nhận</label>
+                <div class="compact-form-group">
+                    <label for="receivingTime">Giờ nhận</label>
                     <input type="time" id="receivingTime">
                 </div>
             </div>
-
-            <div class="input-group">
-                <div class="form-control" style="width: 100%;">
-                    <label>Kết quả kiểm nghiệm</label>
-                    <textarea id="inspectionResult" rows="1"></textarea>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="inspectionResult">Kết quả kiểm nghiệm</label>
+                    <textarea id="inspectionResult" rows="2"></textarea>
                 </div>
             </div>
         </div>
 
-        <div style="margin-bottom: 15px;">
-            <div style="font-weight: bold; margin-bottom: 5px; text-transform: uppercase; border-bottom: 1px solid #000; display: inline-block;">Danh mục thuốc:</div>
-            <table id="productTable">
+        <div class="compact-form-section">
+            <div class="section-title">Danh mục thuốc nhận hàng</div>
+            <table id="productTable" class="compact-table">
                 <thead>
                     <tr>
-                        <th>STT</th>
-                        <th>Tên hàng hóa / Quy cách</th>
-                        <th style="width: 60px;">ĐVT</th>
-                        <th style="width: 80px;">Số Lô</th>
-                        <th style="width: 80px;">Hạn SD</th>
-                        <th style="width: 60px;">SL<br>Thực tế</th>
-                        <th style="width: 50px;">Thừa</th>
-                        <th style="width: 50px;">Thiếu</th>
-                        <th style="width: 50px;">Hỏng</th>
-                        <th style="width: 90px;">Tình trạng</th>
-                        <th>Ghi chú</th>
-                        <th class="no-print" style="width: 40px;">Xóa</th>
+                        <th style="width: 40px;">STT</th>
+                        <th style="width: 200px;">Tên hàng</th>
+                        <th style="width: 80px;">ĐVT</th>
+                        <th style="width: 90px;">Số Lô</th>
+                        <th style="width: 90px;">Hạn SD</th>
+                        <th style="width: 80px;">SL<br>Thực tế</th>
+                        <th style="width: 60px;">Thừa</th>
+                        <th style="width: 60px;">Thiếu</th>
+                        <th style="width: 60px;">Hỏng</th>
+                        <th style="width: 100px;">Tình trạng</th>
+                        <th style="width: 100px;">Ghi chú</th>
+                        <th style="width: 50px;" class="no-print">Xóa</th>
                     </tr>
                 </thead>
                 <tbody id="productTableBody"></tbody>
             </table>
-            <button type="button" id="addProductBtn" class="btn no-print" style="margin-top: 5px;">+ Thêm dòng</button>
+            <button type="button" id="addProductBtn" class="btn-secondary no-print" style="margin-top: 10px;"><span>+</span> Thêm sản phẩm</button>
         </div>
 
-        <div class="receiving-info" style="border: 1px solid #000; padding: 10px; margin-bottom: 10px;">
-            <div class="input-group">
-                <div class="form-control">
-                    <label>Giao nhận vận chuyển</label>
-                    <input type="text" id="deliveryTransport">
-                </div>
-                <div class="form-control">
-                    <label>Điều kiện thanh toán</label>
-                    <input type="text" id="paymentCondition">
-                </div>
-            </div>
-            <div class="input-group">
-                <div class="form-control">
-                    <label>Các yêu cầu khác</label>
-                    <input type="text" id="otherRequirements">
-                </div>
-            </div>
+        <div class="receiving-info">
+            <div class="receiving-info-row"><div class="receiving-info-label">Giao nhận vận chuyển:</div><input type="text" class="receiving-info-input" id="deliveryTransport"></div>
+            <div class="receiving-info-row"><div class="receiving-info-label">Điều kiện thanh toán:</div><input type="text" class="receiving-info-input" id="paymentCondition"></div>
+            <div class="receiving-info-row"><div class="receiving-info-label">Các yêu cầu khác:</div><input type="text" class="receiving-info-input" id="otherRequirements"></div>
         </div>
 
         <div class="signature-section">
             <div class="signature-box">
-                <div class="signature-title">Bộ Phận Kho/Kế toán</div>
-                <br><br><br>
-                <input type="text" id="deptStaffName" class="signature-name" placeholder="(Ký, ghi rõ họ tên)">
+                <div class="signature-line">Bộ Phận Kho/Kế toán</div>
+                <input type="text" id="deptStaffName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none; color: #000;">
             </div>
             <div class="signature-box">
-                <div class="signature-title">Người lập biên bản</div>
-                <br><br><br>
-                <input type="text" id="preparerName" class="signature-name" placeholder="(Ký, ghi rõ họ tên)">
+                <div class="signature-line">Người lập biên bản</div>
+                <input type="text" id="preparerName" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none; color: #000;">
             </div>
             <div class="signature-box">
-                <div class="signature-title">Phụ trách chuyên môn</div>
-                <br><br><br>
-                <input type="text" id="warehouseStaffName" class="signature-name" placeholder="(Ký, ghi rõ họ tên)">
+                <div class="signature-line">Phụ trách chuyên môn</div>
+                <input type="text" id="warehouseStaffName" value="Nguyễn Minh Tâm" placeholder="Họ tên" style="width: 100%; margin-top: 5px; text-align: center; border: none; border-bottom: 1px dashed #ccc; background: transparent; outline: none; color: #000;">
             </div>
         </div>
 
         <div class="upload-section no-print">
-            <strong>Nhập dữ liệu:</strong>
-            <div style="margin-top: 5px; display: flex; gap: 10px; align-items: center;">
-                <input type="file" id="dataFile" accept=".xlsx,.xls">
-                <span>HOẶC</span>
-                <button type="button" id="openPasteModalBtn" class="btn">📋 Dán từ Excel & Soi chiếu</button>
+            <div class="section-title">Nhập dữ liệu (Upload Excel hoặc Dán từ Clipboard)</div>
+            <div class="form-row" style="align-items: flex-end;">
+                <div class="form-group">
+                    <label for="dataFile">Chọn file Excel (.xlsx, .xls)</label>
+                    <input type="file" id="dataFile" accept=".xlsx,.xls">
+                </div>
+                <div class="form-group" style="flex: 0 0 auto; display: flex; align-items: center; padding-bottom: 5px;">
+                    <span style="margin: 0 10px; font-weight: bold;">HOẶC</span>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="openPasteModalBtn" class="btn-teal" style="width: 100%; justify-content: center; padding: 10px;">
+                        📋 Dán dữ liệu từ Excel/Sheet
+                    </button>
+                </div>
             </div>
             <div id="uploadMessage"></div>
         </div>
 
         <div class="utility-buttons no-print">
-             <button type="button" class="btn" onclick="window.open('https://idecochupanh.netlify.app', '_blank')">📷 Camera AI</button>
-             <button type="button" class="btn" onclick="window.open('https://erp-ideco.skyit.vn/#/app/dashboard/main', '_blank')">🏠 ERP Home</button>
+            <button type="button" id="cameraAiBtn" class="btn-purple" onclick="openCameraAI()">📷 ChụpAI</button>
+            <button type="button" id="erpHomeBtn" class="btn-purple" onclick="openERPHome()">🏠 ERP HOME</button>
         </div>
 
         <div class="action-buttons no-print">
-            <button type="button" id="saveBtn" class="btn" style="background: #333; color: white;">💾 Lưu & Tạo PDF</button>
-            <button type="button" id="exportExcelBtn" class="btn">📊 Excel</button>
-            <button type="button" id="exportPdfBtn" class="btn">📄 PDF</button>
-            <button type="button" id="printBtn" class="btn">🖨️ In ngay</button>
-            <button type="button" id="resetBtn" class="btn" style="border-color: red; color: red;">🔄 Làm mới</button>
+            <button type="button" id="saveBtn" class="btn-primary">💾 Lưu & Tạo PDF</button>
+            <button type="button" id="exportExcelBtn" class="btn-info">📊 Xuất Excel</button>
+            <button type="button" id="exportPdfBtn" class="btn-warning">📄 Xuất PDF</button>
+            <button type="button" id="printBtn" class="btn-secondary">🖨️ In</button>
+            <button type="button" id="resetBtn" class="btn-danger">🔄 Làm mới</button>
+        </div>
+
+        <div class="saved-files-section no-print">
+            <div class="section-title">Danh sách file PDF đã lưu</div>
+            <div class="files-list" id="filesList"><div class="file-item"><div class="file-info"><div class="file-name">Đang tải danh sách...</div></div></div></div>
         </div>
         
-        <div class="saved-files-section no-print">
-            <strong>File đã lưu:</strong>
-            <div class="files-list" id="filesList"></div>
+        <div class="pdf-options no-print" id="pdfOptions" style="display: none;">
+            <h4 style="margin-top: 0;">Tùy chọn xuất PDF:</h4>
+            <label><input type="radio" name="pageOrientation" value="portrait" checked> Khổ dọc (A4)</label>
+            <label><input type="radio" name="pageOrientation" value="landscape"> Khổ ngang (A4)</label>
+            <button type="button" id="confirmExportPdf" class="btn-primary">Xác nhận</button>
+            <button type="button" id="cancelExportPdf" class="btn-danger">Hủy</button>
         </div>
     </div>
 
     <div id="pasteModal" class="modal no-print">
         <div class="modal-content">
-            <span class="close-modal" id="closePasteModal" style="float:right; cursor:pointer; font-size:24px; font-weight:bold;">&times;</span>
-            <h3 style="margin-top: 0;">Dán dữ liệu từ Excel & Soi chiếu cột</h3>
-            <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Bước 1: Copy bảng từ Excel và dán vào ô bên dưới.</p>
-            <textarea id="pasteInput" style="width:100%; height:120px; border:1px solid #000; font-family: monospace; padding: 10px;" placeholder="Dán dữ liệu vào đây (Ctrl + V)..."></textarea>
-            
-            <div id="previewContainer" style="display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px;">
-                <h4 style="margin: 5px 0;">Bước 2: Xem trước & Chọn cột tương ứng</h4>
-                <p style="font-size: 13px; color: red;">* Vui lòng chọn đúng tên cột ở dòng tiêu đề bên dưới</p>
-                <div style="overflow-x: auto; max-height: 300px;">
+            <span class="close-modal" id="closePasteModal">&times;</span>
+            <h3 style="margin-top: 0; color: var(--primary-color);">Dán và Ánh xạ dữ liệu</h3>
+            <p style="font-size: 13px; color: #666;">Copy dữ liệu từ Excel (bao gồm cả nhiều cột) và dán vào ô bên dưới. Sau đó chọn cột tương ứng ở bảng xem trước.</p>
+            <textarea id="pasteInput" class="paste-area" placeholder="Dán dữ liệu vào đây (Ctrl + V)..."></textarea>
+            <div id="previewContainer" style="display: none;">
+                <h4 style="margin-bottom: 5px;">Xem trước & Chọn cột (Mapping):</h4>
+                <div class="mapping-container">
                     <table class="mapping-table" id="mappingTable"></table>
                 </div>
                 <div style="margin-top: 15px; text-align: right;">
-                    <button type="button" id="processPasteBtn" class="btn" style="background: #333; color: white; padding: 10px 20px;">📥 XÁC NHẬN NHẬP DỮ LIỆU</button>
+                    <button type="button" id="processPasteBtn" class="btn-primary">📥 Nhập dữ liệu vào bảng</button>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div id="pdfOptions" class="modal no-print">
-        <div class="modal-content" style="width: 300px;">
-            <h3>Tùy chọn PDF</h3>
-            <label><input type="radio" name="pageOrientation" value="portrait" checked> Khổ dọc (A4)</label><br>
-            <label><input type="radio" name="pageOrientation" value="landscape"> Khổ ngang (A4)</label><br><br>
-            <button id="confirmExportPdf" class="btn" style="background:#333; color:white;">Xuất file</button>
-            <button id="cancelExportPdf" class="btn">Hủy</button>
         </div>
     </div>
 
@@ -288,301 +311,342 @@
         // --- CONFIG & INIT ---
         const firebaseConfig = { apiKey: "AIzaSyCM_gZ1DEOtUwB0Ii-dm-6jIpxydoJU4-E", authDomain: "dulieuthuoc-d532e.firebaseapp.com", projectId: "dulieuthuoc-d532e", storageBucket: "dulieuthuoc-d532e.firebasestorage.app", messagingSenderId: "70002622120", appId: "1:70002622120:web:9676e1616a0774bae28c9d", measurementId: "G-LQ5P054T97" };
         let db, storage;
-        try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); storage = firebase.storage(); } catch (e) { console.error(e); }
 
-        function showMessage(msg, type) { 
-            const el = document.getElementById('uploadMessage'); 
-            el.innerHTML = `<div style="color:${type==='error'?'red':'green'}">${msg}</div>`; 
-            setTimeout(() => el.innerHTML = '', 5000); 
-        }
+        try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); storage = firebase.storage(); console.log("Firebase OK"); } 
+        catch (error) { console.error("Firebase error:", error); }
+
+        // --- UTILS ---
+        function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+        function openCameraAI() { window.open('https://idecochupanh.netlify.app', '_blank'); }
+        function openERPHome() { window.open('https://erp-ideco.skyit.vn/#/app/dashboard/main', '_blank'); }
+        function showMessage(msg, type = 'success') { const el = document.getElementById('uploadMessage'); el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`; setTimeout(() => el.innerHTML = '', 5000); }
         
-        function formatDateForInput(d) {
-            if(!d) return '';
-            // Giữ nguyên nếu là dd/mm/yyyy để hiển thị (logic mapping sẽ xử lý sau) hoặc format chuẩn yyyy-mm-dd cho input date
-            if(d.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) { 
-                const p = d.split('/'); return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; 
+        function formatDateForInput(dateString) {
+            if (!dateString) return '';
+            // Chuyển string thành string an toàn
+            const str = String(dateString).trim();
+            
+            // Trường hợp dd/mm/yyyy
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+                const parts = str.split('/');
+                return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
             }
-            return d;
+            // Trường hợp đã là yyyy-mm-dd
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+            
+            return str;
         }
 
+        // --- HELPER: CHUYỂN INPUT THÀNH TEXT ĐỂ IN/PDF ---
         function toggleInputsForExport(isExporting) {
-            const statusEl = document.getElementById('connectionStatus');
-            if(statusEl) statusEl.style.display = isExporting ? 'none' : (db ? 'flex' : 'none');
-            
-            document.querySelectorAll('.print-substitution').forEach(e => e.remove());
-            document.querySelectorAll('textarea, input, select').forEach(el => {
-                if(['button','file','radio','checkbox','hidden'].includes(el.type)) return;
+            // Ẩn luôn thông báo kết nối khi Export PDF
+            const connStatus = document.getElementById('connectionStatus');
+            if (connStatus) {
+                connStatus.style.display = isExporting ? 'none' : 'block';
+            }
+
+            // Xử lý Textarea và Input
+            document.querySelectorAll('textarea, input:not([type="button"]):not([type="radio"]):not([type="checkbox"]):not([type="file"]), select').forEach(el => {
                 if (isExporting) {
+                    // Tạo div thay thế
                     const div = document.createElement('div');
                     div.className = 'print-substitution';
+                    // Copy style cơ bản
+                    div.style.width = el.style.width || '100%';
                     div.style.textAlign = window.getComputedStyle(el).textAlign;
-                    if (el.tagName === 'SELECT') div.textContent = el.options[el.selectedIndex]?.text || '';
-                    else if (el.type === 'date' && el.value) {
-                        const p = el.value.split('-');
-                        div.textContent = `${p[2]}/${p[1]}/${p[0]}`;
-                    } else { div.textContent = el.value; }
+                    
+                    // Lấy nội dung
+                    if (el.tagName === 'SELECT') {
+                        div.textContent = el.options[el.selectedIndex]?.text || '';
+                    } else {
+                        div.textContent = el.value;
+                    }
+                    
+                    // Đánh dấu để xóa sau này
+                    div.dataset.subFor = el.name || el.id;
+                    
+                    // Ẩn element gốc, hiện div
                     el.style.display = 'none';
                     el.parentNode.insertBefore(div, el);
-                } else { el.style.display = ''; }
+                } else {
+                    // Khôi phục: Xóa div thay thế, hiện lại input
+                    const sub = el.parentNode.querySelector(`.print-substitution[data-subFor="${el.name || el.id}"]`);
+                    if (sub) sub.remove();
+                    el.style.display = '';
+                }
             });
         }
 
+        // --- XỬ LÝ SỰ KIỆN IN TRÌNH DUYỆT (Ctrl+P) ---
         window.onbeforeprint = () => toggleInputsForExport(true);
         window.onafterprint = () => toggleInputsForExport(false);
 
+        // --- COLUMN RESIZE ---
+        function makeTableResizable() {
+            document.querySelectorAll('#productTable th').forEach(col => {
+                if (!col.querySelector('.resizer') && !col.classList.contains('no-print')) {
+                    const resizer = document.createElement('div'); resizer.className = 'resizer'; col.appendChild(resizer);
+                    let x = 0, w = 0;
+                    const md = (e) => { x = e.clientX; w = parseInt(window.getComputedStyle(col).width); document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); resizer.classList.add('resizing'); };
+                    const mm = (e) => { col.style.width = `${w + e.clientX - x}px`; };
+                    const mu = () => { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); resizer.classList.remove('resizing'); };
+                    resizer.addEventListener('mousedown', md);
+                }
+            });
+        }
+
+        // --- FIREBASE SUPPLIERS ---
+        function loadSuppliers() {
+            if (!db) return;
+            db.collection('suppliers').get().then(qs => {
+                const dl = document.getElementById('supplierList'); dl.innerHTML = '';
+                qs.forEach(doc => { if(doc.data().name) { const op = document.createElement('option'); op.value = doc.data().name; dl.appendChild(op); }});
+            });
+        }
+        function saveSupplier(name) {
+            if (!db || !name) return;
+            db.collection('suppliers').where('name', '==', name).get().then(qs => {
+                if (qs.empty) db.collection('suppliers').add({ name: name, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            });
+        }
+
+        // --- MAIN LOGIC ---
         document.addEventListener('DOMContentLoaded', function() {
-            loadSuppliers(); loadDataFromFirebase(); loadSavedFiles();
+            makeTableResizable();
+            loadSuppliers();
+            loadDataFromFirebase();
+            loadSavedFiles();
+
+            const cs = document.getElementById('connectionStatus');
+            if (db) db.enableNetwork().then(() => { cs.style.display = 'block'; cs.className = 'alert alert-success'; cs.innerHTML = '<span class="status-indicator status-online"></span> Kết nối OK'; }).catch(e => { cs.style.display = 'block'; cs.className = 'alert alert-error'; cs.innerHTML = 'Lỗi mạng'; });
+
             const now = new Date();
             document.getElementById('receivingDate').valueAsDate = now;
-            document.getElementById('receivingTime').value = now.toTimeString().slice(0,5);
+            document.getElementById('receivingTime').value = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
 
-            document.getElementById('addProductBtn').onclick = () => addNewProductRow();
-            document.getElementById('saveBtn').onclick = saveDataAndCreatePDF;
-            document.getElementById('resetBtn').onclick = resetForm;
-            document.getElementById('printBtn').onclick = () => window.print();
-            
-            const cs = document.getElementById('connectionStatus');
-            if(db) db.enableNetwork().then(() => { cs.style.display = 'flex'; cs.innerHTML = '<span class="status-indicator" style="background:black"></span> Kết nối OK'; }).catch(() => { cs.innerHTML = 'Lỗi mạng'; });
-            
-            // SETUP PASTE MODAL FULL TÍNH NĂNG
-            setupPasteModal();
-            
-            document.getElementById('dataFile').onchange = handleExcelUpload;
-            setupPdfExport();
-            document.querySelectorAll('input, select, textarea').forEach(e => e.addEventListener('change', saveDataToFirebase));
-        });
+            document.getElementById('addProductBtn').addEventListener('click', () => addNewProductRow());
+            document.getElementById('saveBtn').addEventListener('click', saveDataAndCreatePDF);
+            document.getElementById('resetBtn').addEventListener('click', resetForm);
+            document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('change', saveDataToFirebase));
 
-        // --- LOGIC PASTE & MAPPING (Đã sửa lại) ---
-        function setupPasteModal() {
+            // --- PASTE MODAL LOGIC ---
             const modal = document.getElementById('pasteModal');
             const pasteInput = document.getElementById('pasteInput');
             const previewContainer = document.getElementById('previewContainer');
             const mappingTable = document.getElementById('mappingTable');
             let parsedData = [];
 
-            // Mở Modal
-            document.getElementById('openPasteModalBtn').onclick = () => { 
-                modal.style.display = 'flex'; 
-                pasteInput.value = ''; 
-                previewContainer.style.display = 'none'; 
-                pasteInput.focus(); 
-            };
-            
-            // Đóng Modal
+            document.getElementById('openPasteModalBtn').onclick = () => { modal.style.display = 'flex'; pasteInput.value = ''; previewContainer.style.display = 'none'; pasteInput.focus(); };
             document.getElementById('closePasteModal').onclick = () => { modal.style.display = 'none'; };
             window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
 
-            // Khi dán text vào
             pasteInput.addEventListener('input', function() {
                 const text = this.value.trim();
                 if (!text) { previewContainer.style.display = 'none'; return; }
-                
-                // Parse Text (Tách dòng và tab)
                 const rows = text.split(/\n/);
                 parsedData = rows.map(row => row.split(/\t/));
-                
                 if (parsedData.length > 0) {
                     renderPreview(parsedData);
                     previewContainer.style.display = 'block';
                 }
             });
 
-            // Vẽ bảng xem trước với Dropdown chọn cột
             function renderPreview(data) {
                 mappingTable.innerHTML = '';
                 if (data.length === 0) return;
-
                 const colCount = data[0].length;
                 const thead = document.createElement('tr');
-                
-                // Các tùy chọn mapping
-                const options = [
-                    {v:'skip',t:'-- Bỏ qua --'},
-                    {v:'productName',t:'Tên hàng hóa'},
-                    {v:'unit',t:'Đơn vị tính'},
-                    {v:'lotNumber',t:'Số Lô'},
-                    {v:'expiryDate',t:'Hạn Dùng'},
-                    {v:'actualQuantity',t:'Số lượng thực tế'},
-                    {v:'note',t:'Ghi chú'}
-                ];
+                const options = [{v:'skip',t:'Bỏ qua'},{v:'productName',t:'Tên hàng'},{v:'unit',t:'Đơn vị'},{v:'lotNumber',t:'Số lô'},{v:'expiryDate',t:'Hạn dùng'},{v:'actualQuantity',t:'Số lượng'},{v:'note',t:'Ghi chú'}];
 
-                // Tạo hàng Header chứa Dropdown
                 for (let i = 0; i < colCount; i++) {
                     const th = document.createElement('th');
                     const select = document.createElement('select');
                     select.className = 'col-select';
                     select.dataset.colIndex = i;
-                    
-                    options.forEach(opt => { 
-                        const option = document.createElement('option'); 
-                        option.value = opt.v; 
-                        option.text = opt.t; 
-                        select.appendChild(option); 
-                    });
-                    
-                    // Tự động gợi ý (Basic AI logic)
-                    const firstVal = data[0][i] ? data[0][i].toLowerCase() : '';
-                    if(firstVal.includes('tên')) select.value = 'productName';
-                    else if(firstVal.includes('đvt') || firstVal.includes('đơn vị')) select.value = 'unit';
-                    else if(firstVal.includes('lô')) select.value = 'lotNumber';
-                    else if(firstVal.includes('hạn')) select.value = 'expiryDate';
-                    else if(firstVal.includes('lượng')) select.value = 'actualQuantity';
-                    else select.value = 'skip';
-
+                    options.forEach(opt => { const option = document.createElement('option'); option.value = opt.v; option.text = opt.t; select.appendChild(option); });
+                    select.value = 'skip';
                     th.appendChild(select);
                     thead.appendChild(th);
                 }
                 mappingTable.appendChild(thead);
-
-                // Hiển thị tối đa 5 dòng dữ liệu mẫu
                 for (let i = 0; i < Math.min(data.length, 5); i++) {
                     const tr = document.createElement('tr');
-                    data[i].forEach(cell => { 
-                        const td = document.createElement('td'); 
-                        td.textContent = cell; 
-                        tr.appendChild(td); 
-                    });
+                    data[i].forEach(cell => { const td = document.createElement('td'); td.textContent = cell; tr.appendChild(td); });
                     mappingTable.appendChild(tr);
                 }
             }
 
-            // Xử lý khi bấm nút "Xác nhận nhập dữ liệu"
             document.getElementById('processPasteBtn').addEventListener('click', function() {
                 const selects = document.querySelectorAll('.col-select');
                 const mappings = [];
-                
-                selects.forEach(sel => { 
-                    if (sel.value !== 'skip') mappings.push({ index: parseInt(sel.dataset.colIndex), field: sel.value }); 
-                });
-
-                if (mappings.length === 0) { alert('Vui lòng chọn ít nhất một cột dữ liệu (VD: Tên hàng)!'); return; }
-
+                selects.forEach(sel => { if (sel.value !== 'skip') mappings.push({ index: parseInt(sel.dataset.colIndex), field: sel.value }); });
+                if (mappings.length === 0) { alert('Vui lòng chọn ít nhất một cột dữ liệu!'); return; }
                 let importedCount = 0;
                 parsedData.forEach(row => {
-                    if (row.length === 0 || (row.length === 1 && row[0].trim() === '')) return; // Bỏ dòng trống
-                    
+                    if (row.length === 0 || (row.length === 1 && row[0].trim() === '')) return;
                     const productData = {};
-                    let hasData = false;
-
-                    mappings.forEach(map => { 
-                        if (row[map.index] !== undefined) {
-                            productData[map.field] = row[map.index].trim(); 
-                            if(productData[map.field]) hasData = true;
-                        }
-                    });
-
-                    // Chỉ thêm nếu dòng đó có dữ liệu
-                    if (hasData) { 
-                        addNewProductRow(productData); 
-                        importedCount++; 
-                    }
+                    mappings.forEach(map => { if (row[map.index] !== undefined) productData[map.field] = row[map.index].trim(); });
+                    if (Object.keys(productData).length > 0) { addNewProductRow(productData); importedCount++; }
                 });
-
-                showMessage(`Đã nhập thành công ${importedCount} dòng!`, 'success');
+                showMessage(`Đã dán thành công ${importedCount} dòng!`, 'success');
                 saveDataToFirebase();
                 modal.style.display = 'none';
             });
-        }
 
-        // --- CÁC HÀM KHÁC (Reset, PDF, Excel...) ---
-        function resetForm() {
-            if(!confirm('Bạn có chắc muốn xóa hết dữ liệu và tạo phiếu mới?')) return;
-            document.querySelectorAll('input, textarea').forEach(el => {
-                if(el.type !== 'button' && el.type !== 'file' && el.type !== 'radio') el.value = '';
+            // --- EXCEL UPLOAD ---
+            document.getElementById('dataFile').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                        const ws = wb.Sheets[wb.SheetNames[0]];
+                        const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                        let hRowIdx = -1;
+                        for(let i=0; i<json.length; i++) {
+                            const r = json[i];
+                            if (r && (r.includes('Tên Hàng Hóa') || r.includes('Tên hàng'))) { hRowIdx = i; break; }
+                        }
+                        if (hRowIdx === -1) { showMessage('Không tìm thấy tiêu đề!', 'error'); return; }
+                        const map = {};
+                        // Clean header keys
+                        json[hRowIdx].forEach((h, i) => { if(h) map[h.toString().trim()] = i; });
+                        
+                        document.getElementById('productTableBody').innerHTML = '';
+                        let count = 0;
+                        for(let i=hRowIdx+1; i<json.length; i++) {
+                            const r = json[i];
+                            if (r && r.length) {
+                                const d = {};
+                                Object.keys(map).forEach(k => { 
+                                    if(map[k] < r.length) d[k] = r[map[k]]; 
+                                });
+                                addNewProductRow(d); count++;
+                            }
+                        }
+                        showMessage(`Upload ${count} dòng Excel thành công!`, 'success');
+                        saveDataToFirebase();
+                    } catch(err) { console.error(err); showMessage('Lỗi đọc file', 'error'); }
+                };
+                reader.readAsArrayBuffer(file);
             });
-            document.getElementById('productTableBody').innerHTML = '';
-            productCount = 0;
-            const now = new Date();
-            document.getElementById('receivingDate').valueAsDate = now;
-            document.getElementById('receivingTime').value = now.toTimeString().slice(0,5);
-            document.getElementById('warehouseStaffName').value = 'Phạm Minh Tâm';
-            document.getElementById('receivingPlace').value = '003 Carlion 5 262/3 Lũy Bán Bích - Phường Tân Phú -Tp. Hồ Chí Minh';
-            saveDataToFirebase();
-        }
 
-        function setupPdfExport() {
-            const modal = document.getElementById('pdfOptions');
-            document.getElementById('exportPdfBtn').onclick = () => modal.style.display = 'flex';
-            document.getElementById('cancelExportPdf').onclick = () => modal.style.display = 'none';
+            // --- PDF EXPORT ---
+            const pdfModal = document.getElementById('pdfOptions');
+            document.getElementById('exportPdfBtn').onclick = () => pdfModal.style.display = 'block';
+            document.getElementById('cancelExportPdf').onclick = () => pdfModal.style.display = 'none';
+            
+            document.getElementById('printBtn').onclick = () => {
+                window.print(); 
+            };
+
             document.getElementById('confirmExportPdf').onclick = () => {
                 const ori = document.querySelector('input[name="pageOrientation"]:checked').value;
-                toggleInputsForExport(true);
+                
                 document.querySelectorAll('.no-print').forEach(e => e.style.display = 'none');
-                const element = document.getElementById('contentToPrint');
-                html2canvas(element, { scale: 2, useCORS: true, windowWidth: element.scrollWidth, scrollY: -window.scrollY }).then(canvas => {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF({ orientation: ori, unit: 'mm', format: 'a4' });
-                    const imgData = canvas.toDataURL('image/png');
-                    const pageWidth = doc.internal.pageSize.getWidth();
-                    const pageHeight = doc.internal.pageSize.getHeight();
-                    const imgProps = doc.getImageProperties(imgData);
-                    const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
-                    let heightLeft = pdfHeight, position = 0;
-                    doc.addImage(imgData, 'PNG', 0, position, pageWidth, pdfHeight);
-                    heightLeft -= pageHeight;
-                    while (heightLeft >= 0) {
-                        position = heightLeft - pdfHeight;
-                        doc.addPage();
-                        doc.addImage(imgData, 'PNG', 0, position, pageWidth, pdfHeight);
-                        heightLeft -= pageHeight;
-                    }
-                    const fileName = `BienBan_${new Date().getTime()}.pdf`;
-                    doc.save(fileName);
-                    savePdfToDb(doc.output('blob'), fileName);
+                toggleInputsForExport(true);
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: ori, unit: 'mm', format: 'a4' });
+                const el = document.getElementById('contentToPrint');
+                
+                html2canvas(el, { 
+                    scale: 2, 
+                    useCORS: true, 
+                    width: el.scrollWidth, 
+                    height: el.scrollHeight,
+                    windowWidth: el.scrollWidth
+                }).then(cv => {
+                    const img = cv.toDataURL('image/png');
+                    const w = doc.internal.pageSize.getWidth();
+                    const h = doc.internal.pageSize.getHeight();
+                    const imgH = cv.height * w / cv.width;
+                    let left = imgH, top = 0;
+                    doc.addImage(img, 'PNG', 0, top, w, imgH);
+                    left -= h;
+                    while (left >= 0) { top = left - imgH; doc.addPage(); doc.addImage(img, 'PNG', 0, top, w, imgH); left -= h; }
+                    const name = `Bien-ban-${new Date().toISOString().slice(0,19).replace(/[-:]/g,'')}.pdf`;
+                    savePdfToDb(doc.output('blob'), name);
+                    doc.save(name);
+                    
                     toggleInputsForExport(false);
                     document.querySelectorAll('.no-print').forEach(e => e.style.display = '');
-                    modal.style.display = 'none';
+                    pdfModal.style.display = 'none';
                 });
             };
-        }
+        });
 
+        // --- CORE FUNCTIONS ---
         let productCount = 0;
         function addNewProductRow(data = {}) {
             productCount++;
             const tr = document.createElement('tr');
-            const name = data['Tên Hàng Hóa'] || data['productName'] || '';
+            
+            // THAY ĐỔI QUAN TRỌNG: Mapping thêm các trường từ file Excel của bạn (Hạn Sử Dụng, Số Lượng, Tên Hàng Hóa...)
+            const name = data['Tên Hàng Hóa'] || data['Tên hàng'] || data['productName'] || '';
+            const unit = data['Đơn Vị'] || data['Đơn vị tính'] || data['unit'] || 'Hộp';
+            const lot = data['Số Lô'] || data['Số lô'] || data['lotNumber'] || '';
+            // Thêm 'Hạn Sử Dụng' (Excel của bạn) vào danh sách kiểm tra
+            const expiryRaw = data['Hạn Dùng'] || data['Hạn sử dụng'] || data['Hạn Sử Dụng'] || data['expiryDate'] || '';
+            const expiry = formatDateForInput(expiryRaw);
+            // Thêm 'Số Lượng' (Excel của bạn) vào danh sách kiểm tra
+            const qty = data['Tổng Số Lượng'] || data['Số lượng'] || data['Số Lượng'] || data['actualQuantity'] || '';
+
             tr.innerHTML = `
                 <td>${productCount}</td>
-                <td style="text-align:left;"><textarea name="productName" rows="1" style="width:100%; border:none; resize:none; outline:none;" placeholder="Nhập tên hàng...">${name}</textarea></td>
-                <td><input type="text" name="unit" value="${data['unit']||data['Đơn Vị']||'Hộp'}" style="text-align:center; border:none;"></td>
-                <td><input type="text" name="lotNumber" value="${data['lotNumber']||data['Số Lô']||''}" style="text-align:center; border:none;"></td>
-                <td><input type="date" name="expiryDate" value="${formatDateForInput(data['expiryDate']||data['Hạn Dùng']||'')}" style="border:none;"></td>
-                <td><input type="number" name="actualQuantity" value="${data['actualQuantity']||data['Số Lượng']||''}" style="text-align:center; border:none;"></td>
-                <td><input type="number" name="excess" value="${data['excess']||0}" style="text-align:center; border:none; width:40px;"></td>
-                <td><input type="number" name="shortage" value="${data['shortage']||0}" style="text-align:center; border:none; width:40px;"></td>
-                <td><input type="number" name="damaged" value="${data['damaged']||0}" style="text-align:center; border:none; width:40px;"></td>
-                <td><select name="condition" style="border:none;"><option value="Nguyên vẹn">Nguyên vẹn</option><option value="Hư hỏng">Hư hỏng</option></select></td>
-                <td><input type="text" name="note" value="${data['note']||''}" style="border:none;"></td>
-                <td class="no-print"><button onclick="removeRow(this)" style="background:none;border:none;color:red;font-weight:bold;cursor:pointer;">X</button></td>
+                <td><textarea name="productName" class="auto-resize" rows="1" oninput="autoResize(this)">${name}</textarea></td>
+                <td><input type="text" name="unit" value="${unit}"></td>
+                <td><input type="text" name="lotNumber" value="${lot}"></td>
+                <td><input type="date" name="expiryDate" value="${expiry}"></td>
+                <td><input type="number" name="actualQuantity" min="0" value="${qty}"></td>
+                <td><input type="number" name="excessQuantity" min="0" value="${data['excessQuantity']||0}"></td>
+                <td><input type="number" name="shortageQuantity" min="0" value="${data['shortageQuantity']||0}"></td>
+                <td><input type="number" name="damagedQuantity" min="0" value="${data['damagedQuantity']||0}"></td>
+                <td><select name="packageCondition"><option value="Nguyên vẹn">Nguyên vẹn</option><option value="Hư hỏng nhẹ">Hư hỏng nhẹ</option><option value="Hư hỏng nặng">Hư hỏng nặng</option></select></td>
+                <td><input type="text" name="note" value="${data['note']||''}"></td>
+                <td class="no-print"><button type="button" class="btn-danger remove-product" style="padding: 4px;">Xóa</button></td>
             `;
-            if(data['condition']) tr.querySelector('select').value = data['condition'];
             document.getElementById('productTableBody').appendChild(tr);
+            const ta = tr.querySelector('textarea'); if(ta.value) autoResize(ta);
+            const sel = tr.querySelector('select'); if(data['packageCondition']) sel.value = data['packageCondition'];
+            tr.querySelector('.remove-product').addEventListener('click', () => { 
+                tr.remove(); 
+                let i=0; document.querySelectorAll('#productTableBody tr').forEach(r => r.cells[0].textContent = ++i); productCount=i;
+                saveDataToFirebase(); 
+            });
         }
 
-        window.removeRow = function(btn) {
-            btn.closest('tr').remove();
-            let i=0; document.querySelectorAll('#productTableBody tr').forEach(r => r.cells[0].textContent = ++i); productCount=i;
+        function resetForm() {
+            if(!confirm('Xóa hết làm mới?')) return;
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                if(el.id!=='receivingPlace' && el.id!=='warehouseStaffName') el.value = '';
+            });
+            document.getElementById('productTableBody').innerHTML = ''; productCount = 0;
+            const now = new Date();
+            document.getElementById('receivingDate').valueAsDate = now;
+            document.getElementById('receivingTime').value = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
             saveDataToFirebase();
         }
 
         function collectData() {
-            const products = [];
+            const prods = [];
             document.querySelectorAll('#productTableBody tr').forEach(r => {
-                products.push({
+                prods.push({
                     productName: r.querySelector('[name="productName"]').value,
                     unit: r.querySelector('[name="unit"]').value,
                     lotNumber: r.querySelector('[name="lotNumber"]').value,
                     expiryDate: r.querySelector('[name="expiryDate"]').value,
                     actualQuantity: r.querySelector('[name="actualQuantity"]').value,
-                    excess: r.querySelector('[name="excess"]').value,
-                    shortage: r.querySelector('[name="shortage"]').value,
-                    damaged: r.querySelector('[name="damaged"]').value,
-                    condition: r.querySelector('[name="condition"]').value,
+                    excessQuantity: r.querySelector('[name="excessQuantity"]').value,
+                    shortageQuantity: r.querySelector('[name="shortageQuantity"]').value,
+                    damagedQuantity: r.querySelector('[name="damagedQuantity"]').value,
+                    packageCondition: r.querySelector('[name="packageCondition"]').value,
                     note: r.querySelector('[name="note"]').value
                 });
             });
             return {
-                info: {
+                deliveryInfo: {
                     supplier: document.getElementById('supplierName').value,
                     invoice: document.getElementById('invoiceNumber').value,
                     contract: document.getElementById('contractNumber').value,
@@ -590,112 +654,95 @@
                     date: document.getElementById('receivingDate').value,
                     time: document.getElementById('receivingTime').value,
                     inspection: document.getElementById('inspectionResult').value,
-                    transport: document.getElementById('deliveryTransport').value,
-                    payment: document.getElementById('paymentCondition').value,
-                    other: document.getElementById('otherRequirements').value,
-                    deptStaff: document.getElementById('deptStaffName').value,
-                    preparer: document.getElementById('preparerName').value,
-                    warehouseStaff: document.getElementById('warehouseStaffName').value
-                }, products
+                    deliveryTransport: document.getElementById('deliveryTransport').value,
+                    paymentCondition: document.getElementById('paymentCondition').value,
+                    otherRequirements: document.getElementById('otherRequirements').value,
+                    preparerName: document.getElementById('preparerName').value,
+                    warehouseStaffName: document.getElementById('warehouseStaffName').value,
+                    deptStaffName: document.getElementById('deptStaffName').value
+                }, products: prods
             };
         }
 
         function saveDataToFirebase() {
-            if(db) db.collection('deliveryRecords').doc('current').set(collectData()).catch(console.error);
+            if(!db) return;
+            db.collection('deliveryRecords').doc('current').set(collectData()).catch(e => console.error(e));
         }
 
         function loadDataFromFirebase() {
             if(!db) return;
             db.collection('deliveryRecords').doc('current').onSnapshot(doc => {
                 if(doc.exists) {
-                    const d = doc.data(); const i = d.info || {};
-                    document.getElementById('supplierName').value = i.supplier||'';
-                    document.getElementById('invoiceNumber').value = i.invoice||'';
-                    document.getElementById('contractNumber').value = i.contract||'';
-                    document.getElementById('receivingPlace').value = i.place||'';
-                    document.getElementById('receivingDate').value = i.date||'';
-                    document.getElementById('receivingTime').value = i.time||'';
-                    document.getElementById('inspectionResult').value = i.inspection||'';
-                    document.getElementById('deliveryTransport').value = i.transport||'';
-                    document.getElementById('paymentCondition').value = i.payment||'';
-                    document.getElementById('otherRequirements').value = i.other||'';
-                    document.getElementById('deptStaffName').value = i.deptStaff||'';
-                    document.getElementById('preparerName').value = i.preparer||'';
-                    document.getElementById('warehouseStaffName').value = i.warehouseStaff||'Phạm Minh Tâm';
+                    const d = doc.data(); const info = d.deliveryInfo || {};
+                    document.getElementById('supplierName').value = info.supplier||'';
+                    document.getElementById('invoiceNumber').value = info.invoice||'';
+                    document.getElementById('contractNumber').value = info.contract||'';
+                    document.getElementById('receivingPlace').value = info.place||'003 Carlion 5 262/3 Lũy Bán Bích - Phường Tân Phú -Tp. Hồ Chí Minh';
+                    document.getElementById('receivingDate').value = info.date||'';
+                    document.getElementById('receivingTime').value = info.time||'';
+                    document.getElementById('inspectionResult').value = info.inspection||'';
+                    document.getElementById('deliveryTransport').value = info.deliveryTransport||'';
+                    document.getElementById('paymentCondition').value = info.paymentCondition||'';
+                    document.getElementById('otherRequirements').value = info.otherRequirements||'';
+                    document.getElementById('preparerName').value = info.preparerName||'';
+                    document.getElementById('warehouseStaffName').value = info.warehouseStaffName||'Nguyễn Minh Tâm';
+                    document.getElementById('deptStaffName').value = info.deptStaffName||'';
+
                     const tb = document.getElementById('productTableBody'); tb.innerHTML = ''; productCount=0;
                     (d.products||[]).forEach(p => addNewProductRow(p));
+                    showMessage('Đã đồng bộ dữ liệu', 'success');
                 }
             });
         }
-        
+
         function saveDataAndCreatePDF() {
+            const sName = document.getElementById('supplierName').value.trim();
+            if(sName) { saveSupplier(sName); setTimeout(loadSuppliers, 1000); }
             saveDataToFirebase();
             document.getElementById('exportPdfBtn').click();
         }
 
         function savePdfToDb(blob, name) {
-            if(storage && db) {
-                storage.ref(`pdfs/${name}`).put(blob).then(s => s.ref.getDownloadURL())
-                .then(url => db.collection('savedPdfs').add({ fileName: name, downloadURL: url, createdAt: firebase.firestore.FieldValue.serverTimestamp() }))
-                .then(() => showMessage('Đã lưu PDF vào hệ thống', 'success'));
-            }
+            if(!storage||!db) return;
+            storage.ref(`pdfs/${name}`).put(blob).then(s => s.ref.getDownloadURL())
+            .then(url => db.collection('savedPdfs').add({ fileName: name, downloadURL: url, createdAt: firebase.firestore.FieldValue.serverTimestamp() }))
+            .then(() => showMessage('PDF đã lưu', 'success'));
         }
-        
+
         function loadSavedFiles() {
             if(!db) return;
-            db.collection('savedPdfs').orderBy('createdAt', 'desc').limit(5).onSnapshot(s => {
+            db.collection('savedPdfs').orderBy('createdAt', 'desc').limit(10).onSnapshot(sn => {
                 const l = document.getElementById('filesList'); l.innerHTML = '';
-                s.forEach(d => {
+                if(sn.empty) { l.innerHTML = '<div class="file-item">Chưa có file</div>'; return; }
+                sn.forEach(d => {
                     const dd = d.data();
-                    l.innerHTML += `<div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:5px;"><span>${dd.fileName}</span><a href="${dd.downloadURL}" target="_blank">Tải</a></div>`;
+                    const div = document.createElement('div'); div.className = 'file-item';
+                    div.innerHTML = `<div class="file-info"><div class="file-name">${dd.fileName}</div><div class="file-date">${new Date(dd.createdAt.toDate()).toLocaleString('vi-VN')}</div></div><button class="btn-secondary" onclick="window.open('${dd.downloadURL}')">Tải</button>`;
+                    l.appendChild(div);
                 });
             });
         }
-
-        function loadSuppliers() {
-            if(db) db.collection('suppliers').get().then(q => {
-                const dl = document.getElementById('supplierList'); dl.innerHTML = '';
-                q.forEach(d => { const o = document.createElement('option'); o.value = d.data().name; dl.appendChild(o); });
-            });
-        }
-
-        function handleExcelUpload(e) {
-            const f = e.target.files[0]; if(!f) return;
-            const r = new FileReader();
-            r.onload = (evt) => {
-                try {
-                    const wb = XLSX.read(new Uint8Array(evt.target.result), {type:'array'});
-                    const ws = wb.Sheets[wb.SheetNames[0]];
-                    const json = XLSX.utils.sheet_to_json(ws, {header:1});
-                    let hIdx = -1;
-                    for(let i=0;i<json.length;i++) if(JSON.stringify(json[i]).includes('Tên')) { hIdx=i; break; }
-                    if(hIdx>-1) {
-                         document.getElementById('productTableBody').innerHTML=''; productCount=0;
-                         const headers = json[hIdx];
-                         for(let i=hIdx+1; i<json.length; i++) {
-                             const row = json[i]; if(!row || !row.length) continue;
-                             const d = {};
-                             headers.forEach((h, idx) => { if(h && row[idx]) d[h] = row[idx]; });
-                             addNewProductRow(d);
-                         }
-                    }
-                } catch(ex) { alert('Lỗi đọc file'); }
-            };
-            r.readAsArrayBuffer(f);
-        }
         
-        document.getElementById('exportExcelBtn').onclick = () => {
+        // Export Excel
+        document.getElementById('exportExcelBtn').addEventListener('click', () => {
             const wb = XLSX.utils.book_new();
-            const data = [['BIÊN BẢN NHẬN HÀNG'],
-                          ['Nhà cung cấp:', document.getElementById('supplierName').value],
-                          ['STT','Tên hàng','ĐVT','Số lô','Hạn dùng','SL Thực tế','Tình trạng','Ghi chú']];
+            const rows = [
+                ['BIÊN BẢN NHẬN HÀNG'],[''],
+                ['Nhà cung cấp:', document.getElementById('supplierName').value],
+                [''],
+                ['STT','Tên hàng','ĐVT','Số lô','Hạn dùng','SL Thực tế','Thừa','Thiếu','Hỏng','Tình trạng','Ghi chú']
+            ];
             document.querySelectorAll('#productTableBody tr').forEach(r => {
-                const i = r.querySelectorAll('input,textarea,select');
-                data.push([r.cells[0].innerText, i[0].value, i[1].value, i[2].value, i[3].value, i[4].value, i[8].value, i[9].value]);
+                const c = r.querySelectorAll('input, textarea, select');
+                rows.push([r.cells[0].textContent, c[0].value, c[1].value, c[2].value, c[3].value, c[4].value, c[5].value, c[6].value, c[7].value, c[8].value, c[9].value, c[10].value]);
             });
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Sheet1');
-            XLSX.writeFile(wb, 'BienBan.xlsx');
-        };
+            rows.push(['']);
+            rows.push(['BỘ PHẬN KHO/KẾ TOÁN', '', 'NGƯỜI LẬP BIÊN BẢN', '', 'PHỤ TRÁCH CHUYÊN MÔN']);
+            rows.push([document.getElementById('deptStaffName').value, '', document.getElementById('preparerName').value, '', document.getElementById('warehouseStaffName').value]);
+            
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Sheet1');
+            XLSX.writeFile(wb, 'BienBanNhanHang.xlsx');
+        });
     </script>
 </body>
 </html>
